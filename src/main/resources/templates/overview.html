@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{overview.title}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<script th:src="@{/js/app.js}"></script>
+<body>
+<!-- navbar fragment-->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<h1 th:text="#{overview.title}"></h1>
+
+<!-- VESTIGINGEN OVERVIEW -->
+<h2 th:text="#{overview.vestigingen.title}"></h2>
+
+<table>
+    <tr>
+        <th th:text="#{common.naam}"></th>
+        <th th:text="#{common.stad}"></th>
+        <th th:text="#{overview.vestigingen.zitplaatsen}"></th>
+        <th th:text="#{overview.vestigingen.actievebaristas}"></th>
+    </tr>
+
+    <tr th:each="v : ${vestigingen}">
+        <td>
+            <a th:href="|/vestiging/${v.id}|"
+               th:text="${v.naam}">
+            </a>
+        </td>
+
+        <td th:text="${v.stad}"></td>
+        <td th:text="${v.aantalZitplaatsen}"></td>
+        <td th:text="${v.aantalActieveBaristas}"></td>
+    </tr>
+</table>
+
+<hr>
+
+<!-- FILTER FORM VOOR BARISTAS -->
+<!-- th:action = URL waarnaar het formulier wordt verzonden
+     th:object = het object (DTO) waaraan de formvelden gekoppeld zijn,
+      dit is gewoon de parameter van de DTO in jouw controller -->
+<h2 th:text="#{overview.filter.title}"></h2>
+
+<form th:action="@{/overview}" th:object="${filterBaristaDTO}" method="post" class="filter-form">
+    <!-- filter op stad -->
+    <!-- for lus structuur, de option section is de lus zelf (th:each) -->
+    <label th:text="#{overview.filter.stad.label}"></label>
+    <select th:field="*{stadSelected}" id="stadSelected">  <!-- in th:field zet je de parameter van de object -->
+        <!-- option voor "geen filter" -->
+        <option value="" th:text="#{overview.filter.stad.alle}"></option>
+        <!-- th:each, voor elke stad, de parameter stad kies je zelf -->
+        <!-- na de parameter zeg je uit welke list dat moet komen -->
+        <option th:each="stad : ${stedenList}"
+                th:value="${stad.naam}"
+                th:text="${stad.naam}">
+        </option>
+    </select>
+
+
+    <!-- filter op actief/inactief -->
+    <label th:text="#{overview.filter.status.label}"></label>
+    <select th:field="*{actiefSelected}" id="actiefSelected">
+        <option value="" th:text="#{overview.filter.status.alle}"></option>
+        <option value="true" th:text="#{overview.filter.status.actief}"></option>
+        <option value="false" th:text="#{overview.filter.status.inactief}"></option>
+    </select>
+
+
+
+    <!-- filter op opleiding -->
+    <label th:text="#{overview.filter.opleiding.label}"></label>
+    <select th:field="*{opleidingSelected}" id="opleidingSelected">
+        <!-- option voor "geen filter" -->
+        <option value="" th:text="#{overview.filter.opleiding.alle}"></option>
+        <!-- th:each om door opleidingen te loopen -->
+        <!-- th:value gebruikt het ID (voor POST) en th:text toont de titel -->
+        <option th:each="opleiding : ${opleidingenList}"
+                th:value="${opleiding.id}"
+                th:text="${opleiding.titel}">
+        </option>
+    </select>
+
+    <!-- filter op sortering -->
+    <!-- sorteeropties: naam, aantal shifts, geboortedatum -->
+    <label th:text="#{overview.filter.sort.label}"></label>
+    <select th:field="*{sortSelected}" id="sortSelected">
+        <option value="" th:text="#{overview.filter.sort.geen}"></option>
+        <option value="naam" th:text="#{overview.filter.sort.naam}"></option>
+        <option value="shifts" th:text="#{overview.filter.sort.shifts}"></option>
+        <option value="geboortedatum" th:text="#{overview.filter.sort.geboortedatum}"></option>
+    </select>
+
+    <button type="submit" th:text="#{overview.filter.submit}"></button>
+</form>
+
+<!-- BARISTA OVERVIEW -->
+<!--beperkte weergave voor anonieme bezoekers: voornaam, stad van vestiging-->
+<h2 th:text="#{overview.baristas.title}"></h2>
+<table th:with="datePattern=#{date.format}">
+    <tr>
+        <th th:text="#{overview.baristas.voornaam}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.achternaam}"></th>
+        <th th:text="#{common.stad}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{common.actief}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.geboortedatum}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.aantalshifts}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.opleiding}"></th>
+    </tr>
+    <tr th:each="b : ${baristas}">
+        <td>
+            <a sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:href="|/barista/${b.id}|" th:text="${b.voornaam}"></a>
+            <span sec:authorize="!hasAnyRole('ADMIN','BARISTA')" th:text="${b.voornaam}"></span>
+        </td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.achternaam}"></td>
+        <td th:text="${b.stad}"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.actief} ? #{common.ja} : #{common.nee}"></td>
+        <!-- datumformaat komt uit de resource bundle (date.format), niet hardcoded -->
+        <td
+                sec:authorize="hasAnyRole('ADMIN','BARISTA')"
+                th:text="${#temporals.format(b.geboortedatum, datePattern)}"></td>
+        </td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.aantalShifts}"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')">
+            <!-- th:each om door de opleidingen van deze barista te loopen -->
+            <!-- th:text toont de titel van elke opleiding -->
+            <span th:each="opleiding : ${b.opleidingen}"
+                  th:text="${opleiding.titel} + ' '">
+    </span>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

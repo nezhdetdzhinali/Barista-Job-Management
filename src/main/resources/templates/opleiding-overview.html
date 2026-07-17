@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Opleidingen</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1>Opleidingen</h1>
+<div class="action-bar">
+<a class="btn" sec:authorize="hasRole('ADMIN')" th:href="@{/opleiding/nieuw}">Opleiding toevoegen</a>
+</div>
+<p th:if="${foutmelding}" class="error" th:text="${foutmelding}"></p>
+
+<!-- FILTER FORM VOOR OPLEIDINGEN -->
+<form th:action="@{/opleiding}" th:object="${filterOpleidingDTO}" method="post" class="filter-form">
+
+    Titel:
+    <input type="text" th:field="*{titelSelected}" id="titelSelected"/>
+
+    Kies vestiging:
+    <select th:field="*{vestigingSelected}" id="vestigingSelected">
+        <option value="">Alle vestigingen</option>
+        <option th:each="v : ${vestigingen}"
+                th:value="${v.id}"
+                th:text="${v.naam}">
+        </option>
+    </select>
+
+    Beschikbaarheid:
+    <select th:field="*{beschikbaarheidSelected}" id="beschikbaarheidSelected">
+        <option value="">Alles</option>
+        <option value="beschikbaar">Beschikbaar</option>
+        <option value="volgeboekt">Volgeboekt</option>
+    </select>
+
+    <button type="submit">Filter</button>
+</form>
+
+<!-- OPLEIDINGEN OVERVIEW -->
+<table th:with="datePattern=#{date.format}">
+    <tr>
+        <th>Titel</th>
+        <th>Beschrijving</th>
+        <th>Datum</th>
+        <th>Duur (u)</th>
+        <th>Vestiging</th>
+        <th>Deelnemers</th>
+        <th sec:authorize="hasRole('ADMIN')">Deelnemerslijst</th>
+        <th sec:authorize="hasRole('ADMIN')"></th>
+        <th sec:authorize="hasRole('BARISTA')"></th>
+    </tr>
+    <tr th:each="o : ${opleidingen}">
+        <td th:text="${o.titel}"></td>
+        <td th:text="${o.beschrijving}"></td>
+        <td th:text="${#temporals.format(o.datum, datePattern)}"></td>
+        <td th:text="${o.duurInUur}"></td>
+        <td th:text="${o.vestigingNaam}"></td>
+        <td th:text="${o.aantalIngeschreven} + ' / ' + ${o.maxDeelnemers}"></td>
+
+        <!-- enkel admins zien wie ingeschreven is (geen aparte coördinator-rol in deze app) -->
+        <td sec:authorize="hasRole('ADMIN')">
+            <span th:each="naam : ${o.deelnemerNamen}" th:text="${naam} + ', '"></span>
+        </td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <a class="btn" th:href="|/opleiding/${o.id}/bewerken|">Bewerken</a>
+        </td>
+        <!-- inschrijfknop enkel voor ingelogde baristas -->
+        <td sec:authorize="hasRole('BARISTA')">
+            <span th:if="${o.alReedsIngeschreven}">Reeds ingeschreven</span>
+            <span th:if="${!o.alReedsIngeschreven and o.aantalIngeschreven >= o.maxDeelnemers}">Volgeboekt</span>
+            <form th:if="${!o.alReedsIngeschreven and o.aantalIngeschreven lt o.maxDeelnemers}"
+                  th:action="|/opleiding/${o.id}/inschrijven|" method="post">
+                <button type="submit">Inschrijven</button>
+            </form>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

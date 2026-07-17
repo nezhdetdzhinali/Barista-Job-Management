@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${vestiging.naam}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script type="text/javascript">
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${vestiging.naam}"></h1>
+<div class="action-bar">
+<a class="btn" sec:authorize="hasRole('ADMIN')" th:href="|/vestiging/${vestiging.id}/bewerken|">Vestiging bewerken</a>
+</div>
+<!-- basisgegevens -->
+<table>
+    <tr>
+        <th>Stad</th>
+        <td th:text="${vestiging.stad}"></td>
+    </tr>
+    <tr>
+        <th>Aantal zitplaatsen</th>
+        <td th:text="${vestiging.aantalZitplaatsen}"></td>
+    </tr>
+</table>
+
+<!-- baristas -->
+<!-- zelfde RBAC-principe als in overview.html: anonieme bezoekers zien enkel voornaam,
+     ingelogde admins/baristas zien de volledige rij -->
+<h2>Barista's</h2>
+<table>
+    <tr>
+        <th>Voornaam</th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')">Achternaam</th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')">Actief</th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')">Aantal shifts</th>
+    </tr>
+    <tr th:each="b : ${vestiging.baristas}">
+        <td>
+            <a sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:href="|/barista/${b.id}|" th:text="${b.voornaam}"></a>
+            <span sec:authorize="!hasAnyRole('ADMIN','BARISTA')" th:text="${b.voornaam}"></span>
+        </td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.achternaam}"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.actief} ? 'Ja' : 'Nee'"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.aantalShifts}"></td>
+    </tr>
+</table>
+
+<!-- shifts -->
+<h2>Shifts</h2>
+<table  th:with="datePattern=#{date.format}, timePattern=#{time.format}">
+    <tr>
+        <th>Datum</th><th>Startuur</th><th>Einduur</th>
+        <th sec:authorize="hasRole('ADMIN')"></th>
+    </tr>
+    <tr th:each="s : ${vestiging.shifts}">
+        <td th:text="${#temporals.format(s.datum, datePattern)}"></td>
+        <td th:text="${#temporals.format(s.startUur, timePattern)}"></td>
+        <td th:text="${#temporals.format(s.eindUur, timePattern)}"></td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <a class="btn" th:href="|/shift/${s.id}/bewerken|">Bewerken</a>
+            <form th:action="|/shift/${s.id}/verwijderen|" method="post" style="display:inline;">
+                <button type="submit">Verwijderen</button>
+            </form>
+        </td>
+    </tr>
+</table>
+
+
+<!-- opleidingen -->
+<!-- openbare opleidingen, zichtbaar voor iedereen -->
+<h2>Opleidingen</h2>
+<table>
+    <tr>
+        <th>Titel</th>
+    </tr>
+    <tr th:each="o : ${vestiging.opleidingen}">
+        <td th:text="${o.titel}"></td>
+    </tr>
+</table>
+
+<br><br>
+<button type="button" onclick="goBack()">Back</button>
+</body>
+</html>

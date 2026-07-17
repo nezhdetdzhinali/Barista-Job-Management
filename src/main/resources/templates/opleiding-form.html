@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Opleiding</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${opleidingInputDTO.id} != null ? 'Opleiding bewerken' : 'Opleiding toevoegen'"></h1>
+
+<form th:action="${opleidingInputDTO.id} != null ? |/opleiding/${opleidingInputDTO.id}/bewerken| : @{/opleiding/nieuw}"
+      th:object="${opleidingInputDTO}" method="post">
+
+    <input type="hidden" th:field="*{id}" />
+
+    <p>
+        <label>Titel:</label> <input type="text" th:field="*{titel}" size="30"/>
+        <span th:if="${#fields.hasErrors('titel')}" th:errorclass="error" th:errors="*{titel}"></span>
+    </p>
+    <p>
+        <label>Beschrijving:</label> <textarea th:field="*{beschrijving}" rows="4" cols="40"></textarea>
+        <span th:if="${#fields.hasErrors('beschrijving')}" th:errorclass="error" th:errors="*{beschrijving}"></span>
+    </p>
+    <p>
+        <label>Datum:</label> <input type="date" th:field="*{datum}"/>
+        <span th:if="${#fields.hasErrors('datum')}" th:errorclass="error" th:errors="*{datum}"></span>
+    </p>
+    <p>
+        <label>Duur (u):</label> <input type="number" th:field="*{duurInUur}" min="1"/>
+        <span th:if="${#fields.hasErrors('duurInUur')}" th:errorclass="error" th:errors="*{duurInUur}"></span>
+    </p>
+    <p>
+        <label>Maximaal aantal deelnemers:</label> <input type="number" th:field="*{maxDeelnemers}" min="1"/>
+        <span th:if="${#fields.hasErrors('maxDeelnemers')}" th:errorclass="error" th:errors="*{maxDeelnemers}"></span>
+    </p>
+    <p>
+        <label>Vestiging:</label>
+        <select th:field="*{vestigingId}">
+            <option value="">-- kies een vestiging --</option>
+            <option th:each="v : ${vestigingen}" th:value="${v.id}"
+                    th:text="${v.naam} + ' (' + ${v.stad} + ')'"></option>
+        </select>
+        <span th:if="${#fields.hasErrors('vestigingId')}" th:errorclass="error" th:errors="*{vestigingId}"></span>
+    </p>
+    <p><button type="submit">OK</button></p>
+</form>
+</body>
+</html>

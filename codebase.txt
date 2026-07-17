@@ -1,0 +1,4680 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: src/main/java/, src/main/resources/
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/
+  main/
+    java/
+      be/
+        hogent/
+          baristajob2026/
+            advice/
+              ApiExceptionAdvice.java
+              BaristaValidatorAdvice.java
+              GlobalControllerAdvice.java
+              GlobalExceptionAdvice.java
+              VestigingValidatorAdvice.java
+            client/
+              ApiClientDemo.java
+              ClientRunner.java
+            config/
+              InitDataConfig.java
+              InterceptorConfig.java
+              LanguageConfig.java
+              SecurityConfig.java
+            controller/
+              ApiController.java
+              BaristaController.java
+              OpleidingController.java
+              OverviewController.java
+              ShiftController.java
+              VestigingController.java
+            dto/
+              request/
+                BaristaInputDTO.java
+                FilterBaristaDTO.java
+                FilterOpleidingDTO.java
+                OpleidingInputDTO.java
+                ShiftInputDTO.java
+                VestigingInputDTO.java
+              response/
+                BaristaDetailDTO.java
+                BaristaOverviewDTO.java
+                BeschikbareShiftenDTO.java
+                ErrorResponse.java
+                OpleidingDetailDTO.java
+                OpleidingOverviewDTO.java
+                ShiftDetailDTO.java
+                ShiftOverviewDTO.java
+                StadDTO.java
+                VestigingDetailDTO.java
+                VestigingOverviewDTO.java
+            exception/
+              BaristaNotFoundException.java
+              OpleidingNotFoundException.java
+              ShiftNotFoundException.java
+              VestigingNotFoundException.java
+            model/
+              Barista.java
+              Opleiding.java
+              Rol.java
+              Shift.java
+              ShiftRol.java
+              Vestiging.java
+            repository/
+              BaristaRepository.java
+              OpleidingRepository.java
+              ShiftRepository.java
+              VestigingRepository.java
+            service/
+              BaristaService.java
+              BaristaUserDetailsService.java
+              OpleidingService.java
+              ShiftService.java
+              VestigingService.java
+            utils/
+              DateFormats.java
+              GeboortedatumDeserializer.java
+              GeboortedatumSerializer.java
+            validator/
+              BaristaStadLimietValidator.java
+              BaristaUniekValidator.java
+              GeldigeLeeftijd.java
+              GeldigeLeeftijdConstraintValidator.java
+              GeldigeShiftTijden.java
+              GeldigeShiftTijdenConstraintValidator.java
+              VestigingUniekValidator.java
+            BaristaJob2026Application.java
+    resources/
+      i18n/
+        messages_en.properties
+        messages_nl.properties
+        messages.properties
+      static/
+        css/
+          style.css
+      templates/
+        error/
+          403.html
+          404.html
+        fragments/
+          navbar.html
+        barista-detail.html
+        barista-form.html
+        login.html
+        opleiding-form.html
+        opleiding-overview.html
+        overview.html
+        shift-form.html
+        shift-overview.html
+        vestiging-detail.html
+        vestiging-form.html
+      application.properties
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/main/java/be/hogent/baristajob2026/advice/GlobalControllerAdvice.java">
+package be.hogent.baristajob2026.advice;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+import java.util.List;
+
+// een verseiste is dat elke pagina de username en de rol van de ingelogde gebruiker kan tonen
+// deze advice klasse geeft de attributen mee aan elke controller zodat ze in de view gebruikt kunnen worden
+// ipv in elke controller telkens deze attributen te moeten passen via addAttribute per view
+@ControllerAdvice
+public class GlobalControllerAdvice {
+
+    @ModelAttribute("username")
+    public String populateUsername(Authentication authentication) {
+        return authentication == null ? "": authentication.getName();
+    }
+
+    @ModelAttribute("roles")
+    public List<String> populateRoles(Authentication authentication) {
+        return authentication == null ? List.of(): authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(r -> r.replace("ROLE_", ""))
+                .toList();
+    }
+
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/advice/VestigingValidatorAdvice.java">
+package be.hogent.baristajob2026.advice;
+
+import be.hogent.baristajob2026.controller.VestigingController;
+import be.hogent.baristajob2026.validator.VestigingUniekValidator;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.InitBinder;
+
+// voor vestiginregels extra validatie; geen twee vestigingen met dezelfde naam + stad combo
+@ControllerAdvice(assignableTypes = VestigingController.class)
+@RequiredArgsConstructor
+public class VestigingValidatorAdvice {
+    private final VestigingUniekValidator vestigingUniekValidator;
+
+    @InitBinder("vestigingInputDTO")
+    public void initBinder(WebDataBinder binder) {
+        binder.addValidators(vestigingUniekValidator);
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/client/ApiClientDemo.java">
+package be.hogent.baristajob2026.client;
+
+import be.hogent.baristajob2026.dto.response.BaristaOverviewDTO;
+import be.hogent.baristajob2026.dto.response.BeschikbareShiftenDTO;
+import be.hogent.baristajob2026.dto.response.OpleidingOverviewDTO;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public class ApiClientDemo {
+
+    private final String SERVER_URI = "http://localhost:8080/api";
+
+    private final WebClient webClient = WebClient.builder()
+            .baseUrl(SERVER_URI)
+            .build();
+
+    public ApiClientDemo() {
+
+        System.out.println("\n------- BARISTAS IN GENT -------");
+        getBaristasByStad("Gent")
+                .doOnNext(this::printBaristaData)
+                .blockLast();
+
+        System.out.println("\n------- BESCHIKBARE SHIFTS BARISTA 1 -------");
+        getAantalBeschikbareShifts(1L)
+                .doOnNext(this::printShiftData)
+                .doOnError(e -> System.out.println(e.getMessage()))
+                .onErrorResume(e -> Mono.empty())
+                .block();
+
+        System.out.println("\n------- OPLEIDINGEN VESTIGING 1 -------");
+        getOpleidingenPerVestiging(1L)
+                .doOnNext(this::printOpleidingData)
+                .blockLast();
+
+        System.out.println("\n------- ONBESTAANDE VESTIGING (verwacht 404) -------");
+        getOpleidingenPerVestiging(9999L)
+                .doOnNext(this::printOpleidingData)
+                .doOnError(e -> System.out.println(e.getMessage()))
+                .onErrorResume(e -> Mono.empty())
+                .blockLast();
+    }
+
+    private Flux<BaristaOverviewDTO> getBaristasByStad(String stad) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/baristas/stad/{stad}").build(stad))
+                .retrieve()
+                .bodyToFlux(BaristaOverviewDTO.class);
+    }
+
+    private Mono<BeschikbareShiftenDTO> getAantalBeschikbareShifts(Long baristaId) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/baristas/{id}/shifts/beschikbaar").build(baristaId))
+                .retrieve()
+                .bodyToMono(BeschikbareShiftenDTO.class);
+    }
+
+    private Flux<OpleidingOverviewDTO> getOpleidingenPerVestiging(Long vestigingId) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/opleidingen/vestiging/{vestigingId}").build(vestigingId))
+                .retrieve()
+                .bodyToFlux(OpleidingOverviewDTO.class);
+    }
+
+    private void printBaristaData(BaristaOverviewDTO b) {
+        System.out.printf("id=%d, %s %s, stad=%s%n", b.id(), b.voornaam(), b.achternaam(), b.stad());
+    }
+
+    private void printShiftData(BeschikbareShiftenDTO s) {
+        System.out.printf("baristaId=%d, aantalBeschikbaar=%d%n", s.baristaId(), s.aantalBeschikbareShifts());
+    }
+
+    private void printOpleidingData(OpleidingOverviewDTO o) {
+        System.out.printf("id=%d, titel=%s%n", o.id(), o.titel());
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/client/ClientRunner.java">
+package be.hogent.baristajob2026.client;
+
+public class ClientRunner {
+
+    public static void main(String[] args) throws Exception {
+        new ApiClientDemo();
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/config/InterceptorConfig.java">
+package be.hogent.baristajob2026.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+
+// luistert naar de "lang" queryparameter (bv. ?lang=en) en zet die als locale voor de sessie
+@Configuration
+public class InterceptorConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        LocaleChangeInterceptor localeChangeInterceptor = new LocaleChangeInterceptor();
+        localeChangeInterceptor.setParamName("lang");
+        registry.addInterceptor(localeChangeInterceptor);
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/config/LanguageConfig.java">
+package be.hogent.baristajob2026.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+
+import java.util.Locale;
+
+// de resource bundle zelf wordt geconfigureerd via spring.messages.basename in application.properties
+// (voorkeur van mevrouw malfait, ipv hier nog eens een aparte ResourceBundleMessageSource bean aan te maken)
+@Configuration
+public class LanguageConfig {
+
+    @Bean
+    LocaleResolver localeResolver() {
+        SessionLocaleResolver slr = new SessionLocaleResolver();
+        // nl is de standaardtaal van het project in de browser
+        slr.setDefaultLocale(new Locale("nl"));
+        return slr;
+    }
+
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/controller/ApiController.java">
+package be.hogent.baristajob2026.controller;
+
+import be.hogent.baristajob2026.dto.response.BaristaOverviewDTO;
+import be.hogent.baristajob2026.dto.response.BeschikbareShiftenDTO;
+import be.hogent.baristajob2026.dto.response.OpleidingOverviewDTO;
+import be.hogent.baristajob2026.service.BaristaService;
+import be.hogent.baristajob2026.service.OpleidingService;
+import be.hogent.baristajob2026.service.ShiftService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api")
+public class ApiController {
+
+    private final BaristaService baristaService;
+    private final ShiftService shiftService;
+    private final OpleidingService opleidingService;
+
+    // GET /api/baristas/stad/Gent
+    @GetMapping("/baristas/stad/{stad}")
+    public List<BaristaOverviewDTO> getBaristasByStad(@PathVariable String stad) {
+        return baristaService.findByStad(stad);
+    }
+
+    // GET /api/baristas/1/shifts/beschikbaar
+    @GetMapping("/baristas/{id}/shifts/beschikbaar")
+    public BeschikbareShiftenDTO getAantalBeschikbareShifts(@PathVariable Long id) {
+        return new BeschikbareShiftenDTO(id, shiftService.countBeschikbaarVoorBarista(id));
+    }
+
+    // GET /api/opleidingen/vestiging/1
+    @GetMapping("/opleidingen/vestiging/{vestigingId}")
+    public List<OpleidingOverviewDTO> getOpleidingenPerVestiging(@PathVariable Long vestigingId) {
+        return opleidingService.findByVestigingId(vestigingId);
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/request/FilterBaristaDTO.java">
+package be.hogent.baristajob2026.dto.request;
+
+public record FilterBaristaDTO(
+        String stadSelected,
+        String actiefSelected,
+        // opleidings id
+        Long opleidingSelected,
+        String sortSelected) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/request/FilterOpleidingDTO.java">
+package be.hogent.baristajob2026.dto.request;
+
+// voor filters op het opleidingsscherm: beschikbare/volgeboekte opleidingen, vestiging, titel
+public record FilterOpleidingDTO(
+        String beschikbaarheidSelected, // "beschikbaar" / "volgeboekt" / leeg = alles
+        Long vestigingSelected,
+        String titelSelected
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/request/OpleidingInputDTO.java">
+package be.hogent.baristajob2026.dto.request;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
+
+// opleiding toevoegen/wijzigen form input
+public record OpleidingInputDTO(
+        Long id,
+
+        @NotBlank(message = "{opleiding.titel.required}")
+        String titel,
+
+        @NotBlank(message = "{opleiding.beschrijving.required}")
+        String beschrijving,
+
+        @NotNull(message = "{opleiding.datum.required}")
+        // datepicker heeft dit patroon nodig, anders wordt datum locale-afhankelijk geformatteerd
+        // en toont <input type="date"> het veld als leeg
+        @DateTimeFormat(pattern = "yyyy-MM-dd")
+        LocalDate datum,
+
+        @Min(value = 1, message = "{opleiding.duur.positive}")
+        Integer duurInUur,
+
+        @Min(value = 1, message = "{opleiding.maxdeelnemers.positive}")
+        Integer maxDeelnemers,
+
+        @NotNull(message = "{opleiding.vestiging.required}")
+        Long vestigingId
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/request/ShiftInputDTO.java">
+package be.hogent.baristajob2026.dto.request;
+
+import be.hogent.baristajob2026.model.ShiftRol;
+import be.hogent.baristajob2026.validator.GeldigeShiftTijden;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+// shift toevoegen of wijzigen form input
+@GeldigeShiftTijden
+public record ShiftInputDTO(
+        Long id,
+
+        @NotNull(message = "{shift.datum.required}")
+        // datepicker heeft dit patroon nodig, anders wordt datum locale-afhankelijk geformatteerd
+        // en toont <input type="date"> het veld als leeg
+        @DateTimeFormat(pattern = "yyyy-MM-dd")
+        LocalDate datum,
+
+        @NotNull(message = "{shift.startuur.required}")
+        LocalTime startUur,
+
+        @NotNull(message = "{shift.einduur.required}")
+        LocalTime eindUur,
+
+        @NotNull(message = "{shift.rol.required}")
+        ShiftRol rol,
+
+        // maximaal aantal barista's per shift (X), wordt ingesteld bij het aanmaken van de shift
+        @Min(value = 1, message = "{shift.maxbaristas.min}")
+        Integer maxBaristas,
+
+        // voor toevoegen/wijzigen van shift is de id van de vestiging nodig want een shift heeft een vestiging
+        @NotNull(message = "{shift.vestiging.required}")
+        Long vestigingId
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/request/VestigingInputDTO.java">
+package be.hogent.baristajob2026.dto.request;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+// vestiging toevoegen/wijzigen form input
+public record VestigingInputDTO(
+        Long id,
+
+        @NotBlank(message = "{vestiging.naam.required}")
+        String naam,
+
+        @NotBlank(message = "{vestiging.stad.required}")
+        String stad,
+
+        @NotNull(message = "{vestiging.zitplaatsen.required}")
+        @Min(value = 1, message = "{vestiging.zitplaatsen.min}")
+        Integer aantalZitplaatsen
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/BaristaDetailDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public record BaristaDetailDTO(
+        Long id,
+        String voornaam,
+        String achternaam,
+        String email,
+        LocalDate geboortedatum,
+        String studentenkaartNummer,
+        boolean actief,
+        String vestigingNaam,
+        List<ShiftDetailDTO> toekomstigeShifts,
+        List<ShiftDetailDTO> afgelopenShifts,
+        List<OpleidingOverviewDTO> geplandeOpleidingen,
+        List<OpleidingOverviewDTO> voltooideOpleidingen
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/BeschikbareShiftenDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+// voor REST - aantal beschikbare shifts voor een barista
+@JsonPropertyOrder({"barista_id", "aantal_beschikbare_shifts"})
+public record BeschikbareShiftenDTO(
+        @JsonProperty("barista_id")
+        Long baristaId,
+        @JsonProperty("aantal_beschikbare_shifts")
+        int aantalBeschikbareShifts
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/ErrorResponse.java">
+package be.hogent.baristajob2026.dto.response;
+
+public record ErrorResponse(
+        int status,
+        String message,
+        String timestamp
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/OpleidingDetailDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+import java.time.LocalDate;
+import java.util.List;
+
+// voor opleidingsscherm
+public record OpleidingDetailDTO(
+        Long id,
+        String titel,
+        String beschrijving,
+        LocalDate datum,
+        Integer duurInUur,
+        Integer maxDeelnemers,
+        Integer aantalIngeschreven,
+        Long vestigingId,
+        String vestigingNaam,
+        Boolean alReedsIngeschreven, // enkel relevant voor ingelogde barista, anders altijd false
+        List<String> deelnemerNamen  // enkel getoond aan admins in de view (sec:authorize)
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/ShiftOverviewDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+// voor "mijn shifts" en "beschikbare shifts" op de shiftpagina van een barista
+public record ShiftOverviewDTO(
+        Long id,
+        LocalDate datum,
+        LocalTime startUur,
+        LocalTime eindUur,
+        String rol,
+        String vestigingNaam,
+        int aantalIngeschreven,
+        int maxBaristas
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/StadDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+public record StadDTO(String naam) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/VestigingDetailDTO.java">
+package be.hogent.baristajob2026.dto.response;
+import java.util.List;
+
+// voor detail pagina vestiging met baristas, shifts en opleidingen
+public record VestigingDetailDTO(
+        Long id,
+        String naam,
+        String stad,
+        int aantalZitplaatsen,
+        List<BaristaOverviewDTO> baristas,
+        List<ShiftDetailDTO> shifts,
+        List<OpleidingOverviewDTO> opleidingen
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/VestigingOverviewDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+public record VestigingOverviewDTO(
+        Long id,
+        String naam,
+        String stad,
+        int aantalZitplaatsen,
+        long aantalActieveBaristas
+) {}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/exception/OpleidingNotFoundException.java">
+package be.hogent.baristajob2026.exception;
+
+public class OpleidingNotFoundException extends RuntimeException {
+    public OpleidingNotFoundException(Long id) {
+        super("Opleiding niet gevonden met id %d".formatted(id));
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/exception/ShiftNotFoundException.java">
+package be.hogent.baristajob2026.exception;
+
+public class ShiftNotFoundException extends RuntimeException {
+    public ShiftNotFoundException(Long id) {
+        super("Shift niet gevonden met id %d".formatted(id));
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/exception/VestigingNotFoundException.java">
+package be.hogent.baristajob2026.exception;
+
+public class VestigingNotFoundException extends RuntimeException {
+    public VestigingNotFoundException(Long id) {
+        super("Vestiging not found with id %d".formatted(id));
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/model/Rol.java">
+package be.hogent.baristajob2026.model;
+
+// dit zijn security roles
+public enum Rol {
+    ADMIN,
+    BARISTA
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/model/ShiftRol.java">
+package be.hogent.baristajob2026.model;
+
+// dit zijn roles voor shifts
+public enum ShiftRol {
+    BARISTA,
+    KASSIER
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/service/BaristaUserDetailsService.java">
+package be.hogent.baristajob2026.service;
+
+import be.hogent.baristajob2026.model.Barista;
+import be.hogent.baristajob2026.model.Rol;
+import be.hogent.baristajob2026.repository.BaristaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Collection;
+import java.util.Collections;
+
+@Service
+@RequiredArgsConstructor
+public class BaristaUserDetailsService implements UserDetailsService {
+    private final BaristaRepository baristaRepository;
+
+    // wordt aangeroepn door spring security tijdens het inlog process
+    // we moeten alleen de data inleveren
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Barista barista = baristaRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Barista not found: " + email));
+
+        // Geef een Spring Security User-object terug met:
+        // - de email uit de database
+        // - het gehashte wachtwoord uit de database (Spring vergelijkt dit met het ingetypte wachtwoord)
+        // - de rollen/rechten van de gebruiker (omgezet via convertAuthorities)
+        return new User(
+                barista.getEmail(),
+                barista.getPassword(),
+                convertAuthorities(barista.getRol())
+        );
+    }
+
+    private Collection<? extends GrantedAuthority> convertAuthorities(Rol role) {
+        return Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_%s".formatted(role.name())));
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/utils/DateFormats.java">
+package be.hogent.baristajob2026.utils;
+
+import java.time.format.DateTimeFormatter;
+
+public final class DateFormats {
+    private DateFormats() {
+
+    }
+    public static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/utils/GeboortedatumDeserializer.java">
+package be.hogent.baristajob2026.utils;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+
+public class GeboortedatumDeserializer extends JsonDeserializer<LocalDate> {
+
+    @Override
+    public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        String valueAsString = p.getValueAsString();
+        if (valueAsString == null || valueAsString.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(valueAsString, DateFormats.FORMATTER);
+        } catch (DateTimeParseException e) {
+            throw new IOException("Ongeldige datum formaat: %s".formatted(valueAsString), e);
+        }
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/utils/GeboortedatumSerializer.java">
+package be.hogent.baristajob2026.utils;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
+import java.io.IOException;
+import java.time.LocalDate;
+
+public class GeboortedatumSerializer extends JsonSerializer<LocalDate> {
+
+    @Override
+    public void serialize(LocalDate value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        gen.writeString(value.format(DateFormats.FORMATTER));
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/validator/GeldigeLeeftijd.java">
+package be.hogent.baristajob2026.validator;
+
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+// voor java documentatie
+@Documented
+// wat is de validatie? we verwijzen naar een klasse waar de voorwaarden zijn
+@Constraint(validatedBy = GeldigeLeeftijdConstraintValidator.class)
+// boven wat kunnen wij de annotation plaatsen? we zeggen velden hier
+@Target({FIELD})
+// tot wanneer moet de annotation bestaan? hij bestaat hier in runtime anders zouden wij hem niet kunnen gebruiken
+@Retention(RUNTIME)
+public @interface GeldigeLeeftijd {
+
+    int min() default 16;
+    int max() default 30;
+
+    String message() default "leeftijd moet tussen {min} en {max} jaar liggen";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/validator/GeldigeLeeftijdConstraintValidator.java">
+package be.hogent.baristajob2026.validator;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+
+import java.time.LocalDate;
+import java.time.Period;
+
+public class GeldigeLeeftijdConstraintValidator implements ConstraintValidator<GeldigeLeeftijd, LocalDate> {
+
+    private int min;
+    private int max;
+
+    @Override
+    public void initialize(GeldigeLeeftijd constraintAnnotation) {
+        this.min = constraintAnnotation.min();
+        this.max = constraintAnnotation.max();
+    }
+
+    @Override
+    public boolean isValid(LocalDate geboortedatum, ConstraintValidatorContext context) {
+        // niet-ingevulde velden zijn de taak van @NotNull, niet van deze validator
+        if (geboortedatum == null) {
+            return true;
+        }
+
+        int leeftijd = Period.between(geboortedatum, LocalDate.now()).getYears();
+        return leeftijd >= min && leeftijd <= max;
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/validator/GeldigeShiftTijden.java">
+package be.hogent.baristajob2026.validator;
+
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+@Documented
+// wat is de validatie? we verwijzen naar een klasse waar de voorwaarden zijn
+@Constraint(validatedBy = GeldigeShiftTijdenConstraintValidator.class)
+// klass niveau want we werken met 2 parameters, startuur en einduur
+@Target({TYPE})
+// tot wanneer moet de annotation bestaan? hij bestaat hier in runtime anders zouden wij hem niet kunnen gebruiken
+@Retention(RUNTIME)
+public @interface GeldigeShiftTijden {
+    String message() default "Ongeldige shift tijden";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/validator/GeldigeShiftTijdenConstraintValidator.java">
+package be.hogent.baristajob2026.validator;
+
+import be.hogent.baristajob2026.dto.request.ShiftInputDTO;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+
+import java.time.Duration;
+
+public class GeldigeShiftTijdenConstraintValidator implements ConstraintValidator<GeldigeShiftTijden, ShiftInputDTO> {
+    private static final int MIN_UUR = 2;
+    private static final int MAX_UUR = 8;
+
+
+    @Override
+    public void initialize(GeldigeShiftTijden constraintAnnotation) {}
+
+    @Override
+    public boolean isValid(ShiftInputDTO dto, ConstraintValidatorContext context) {
+        // niet-ingevulde velden zijn de taak van @NotNull, niet van deze validator
+        if (dto.startUur() == null || dto.eindUur() == null) {
+            return true;
+        }
+
+        // startuur < einduur
+        if (!dto.startUur().isBefore(dto.eindUur())) {
+            context.disableDefaultConstraintViolation(); // default message van spring uitzetten
+            // als er een fout is, wil ik dat zien op het eindUur field
+            context.buildConstraintViolationWithTemplate("{shift.tijden.volgorde}")
+                    .addPropertyNode("eindUur")
+                    .addConstraintViolation();
+            return false;
+        }
+
+        // duur van een shift: minimaal 2 uur, maximaal 8 uur
+        long duurInMinuten = Duration.between(dto.startUur(), dto.eindUur()).toMinutes();
+        if (duurInMinuten < MIN_UUR * 60 || duurInMinuten > MAX_UUR * 60) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("{shift.tijden.duur}")
+                    .addPropertyNode("eindUur")
+                    .addConstraintViolation();
+            return false;
+        }
+
+        return true;
+    }
+}
+</file>
+
+<file path="src/main/resources/templates/error/404.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <title>Pagina Niet Gevonden</title>
+</head>
+<body>
+
+<div class="error-container">
+    <div class="error-content">
+        <h1>404</h1>
+        <p>Sorry, de pagina die u zoekt, bestaat niet.</p>
+        <p>Het is mogelijk verplaatst of verwijderd.</p>
+        <a th:href="@{/}">Terug naar de homepage</a>
+    </div>
+</div>
+
+</body>
+</html>
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/advice/ApiExceptionAdvice.java">
+package be.hogent.baristajob2026.advice;
+
+import be.hogent.baristajob2026.controller.ApiController;
+import be.hogent.baristajob2026.dto.response.ErrorResponse;
+import be.hogent.baristajob2026.exception.BaristaNotFoundException;
+import be.hogent.baristajob2026.exception.VestigingNotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
+
+// enkel voor ApiController; de MVC-controllers gebruiken GlobalExceptionAdvice (redirect i.p.v. JSON)
+@RestControllerAdvice(assignableTypes = ApiController.class)
+public class ApiExceptionAdvice {
+    @ExceptionHandler(BaristaNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleBaristaNotFound(BaristaNotFoundException ex) {
+        return new ErrorResponse(404, ex.getMessage(), LocalDateTime.now().toString());
+    }
+
+    @ExceptionHandler(VestigingNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleVestigingNotFound(VestigingNotFoundException ex) {
+        return new ErrorResponse(404, ex.getMessage(), LocalDateTime.now().toString());
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/advice/BaristaValidatorAdvice.java">
+package be.hogent.baristajob2026.advice;
+
+import be.hogent.baristajob2026.controller.BaristaController;
+import be.hogent.baristajob2026.validator.BaristaStadLimietValidator;
+import be.hogent.baristajob2026.validator.BaristaUniekValidator;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.InitBinder;
+
+// voor BaristaUniekValidator
+// in welke controller klasse wil je de validator oproepen?
+@ControllerAdvice(assignableTypes = BaristaController.class)
+// om te injecteren
+@RequiredArgsConstructor
+public class BaristaValidatorAdvice {
+    // injectie
+    private final BaristaUniekValidator baristaUniekValidator; // check op unieke email en studentenkaartnummer
+    private final BaristaStadLimietValidator baristaStadLimietValidator; // max 50 actieve barista's in totaal per stad
+
+    // effectief koppelen, de object dat ik heb geinjecteerd moet gebruikt worden in de controller
+    // "baristaInputDTO" is optioneel maar volgens mevrouw malfait vermijd je dubbele error printing door dit?
+    @InitBinder("baristaInputDTO")
+    public void initBinder(WebDataBinder binder) {
+        binder.addValidators(baristaUniekValidator, baristaStadLimietValidator);
+    }
+
+
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/ShiftDetailDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+// voor barista detail page (toekomsitge en afgelopen shifts), en vestiging detail page
+// wordt ook gebruikt voor admin edit/delete shift
+public record ShiftDetailDTO(
+        Long id,
+        LocalDate datum,
+        LocalTime startUur,
+        LocalTime eindUur
+) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/exception/BaristaNotFoundException.java">
+package be.hogent.baristajob2026.exception;
+
+public class BaristaNotFoundException extends RuntimeException {
+    public BaristaNotFoundException(Long id) {
+        super("Barista niet gevonden met id %d".formatted(id));
+    }
+
+    public BaristaNotFoundException(String email) {
+        super("Barista niet gevonden met email %s".formatted(email));
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/model/Shift.java">
+package be.hogent.baristajob2026.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Getter
+@Setter // voor shift form
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // nodig voor JPA-ORM tool
+@AllArgsConstructor // voor builder
+@Builder
+@EqualsAndHashCode(of = {"datum",
+        "startUur",
+        "eindUur",
+        "vestiging"})
+@ToString(exclude = "id")
+public class Shift {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private LocalDate datum;
+
+    @Column(nullable = false)
+    private LocalTime startUur;
+
+    @Column(nullable = false)
+    private LocalTime eindUur;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ShiftRol rol;
+
+    @Column(nullable = false)
+    private int maxBaristas;
+
+    @ManyToOne
+    private Vestiging vestiging;
+
+    @ManyToMany(mappedBy = "shifts")
+    private Set<Barista> ingeschrevenBaristas = new HashSet<>();
+
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/model/Vestiging.java">
+package be.hogent.baristajob2026.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // nodig voor JPA-ORM tool
+@AllArgsConstructor // voor builder
+@Builder
+@EqualsAndHashCode(of = {"naam", "stad"})
+@ToString(exclude = "id")
+public class Vestiging {
+
+    @Id // PK
+    @GeneratedValue(strategy = GenerationType.IDENTITY) //PK is door db ingevuld + auto increment
+    private Long id;
+
+    @Column(nullable = false)
+    private String naam;
+
+    @Column(nullable = false)
+    private String stad;
+
+    @Column(nullable = false)
+    private int aantalZitplaatsen;
+
+    @OneToMany(mappedBy = "vestiging") // owning side is Barista, mappedBy komt dus in de inverse side (Vestiging)
+    private List<Barista> baristas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "vestiging") // zelfde redeneing als hierboven
+    private List<Shift> shifts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "vestiging")
+    private List<Opleiding> opleidingen = new ArrayList<>();
+
+    public Vestiging(String naam,
+                     String stad,
+                     int aantalZitplaatsen) {
+        this.naam = naam;
+        this.stad = stad;
+        this.aantalZitplaatsen = aantalZitplaatsen;
+    }
+
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/repository/OpleidingRepository.java">
+package be.hogent.baristajob2026.repository;
+
+import be.hogent.baristajob2026.model.Opleiding;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface OpleidingRepository extends JpaRepository<Opleiding, Long>  {
+
+    // voor REST: GET /api/opleidingen?vestigingId=
+    List<Opleiding> findByVestigingId(Long vestigingId);
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/repository/ShiftRepository.java">
+package be.hogent.baristajob2026.repository;
+
+import be.hogent.baristajob2026.model.Shift;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface ShiftRepository extends JpaRepository<Shift, Long> {
+
+    // voor beschikbare shifts op de shiftpagina van een barista (enkel eigen vestiging)
+    List<Shift> findByVestigingId(Long vestigingId);
+
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/repository/VestigingRepository.java">
+package be.hogent.baristajob2026.repository;
+
+import be.hogent.baristajob2026.model.Vestiging;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface VestigingRepository extends JpaRepository<Vestiging, Long> {
+
+    // voor VestigingUniekValidator - geen twee vestigingen met dezelfde combinatie naam + stad
+    Optional<Vestiging> findByNaamAndStad(String naam, String stad);
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/validator/BaristaStadLimietValidator.java">
+package be.hogent.baristajob2026.validator;
+
+import be.hogent.baristajob2026.dto.request.BaristaInputDTO;
+import be.hogent.baristajob2026.service.BaristaService;
+import be.hogent.baristajob2026.service.VestigingService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+// additionele businessregel: max 50 actieve barista's in totaal per stad
+// vereist een db-query (tellen), dus geen annotation maar een validator klasse
+@Component
+@RequiredArgsConstructor
+public class BaristaStadLimietValidator implements Validator {
+
+    private static final int MAX_ACTIEVE_BARISTAS_PER_STAD = 50;
+
+    private final BaristaService baristaService;
+    private final VestigingService vestigingService;
+
+
+    @Override
+    public boolean supports(Class<?> klass) {
+        return BaristaInputDTO.class.isAssignableFrom(klass);
+    }
+
+    @Override
+    public void validate(Object target, Errors errors) {
+        BaristaInputDTO dto = (BaristaInputDTO) target;
+
+        boolean wordtActief = dto.actief() != null && dto.actief();
+
+        if (!wordtActief || dto.vestigingId() == null) {
+            return;
+        }
+
+        String stad = vestigingService.findStadById(dto.vestigingId());
+        if (stad == null) {
+            return;
+        }
+
+        long actieveInStad = baristaService.telActieveBaristasInStad(stad, dto.id());
+
+        if (actieveInStad + 1 > MAX_ACTIEVE_BARISTAS_PER_STAD) {
+            errors.rejectValue("vestigingId", "barista.stad.limiet",
+                    "Er mogen maximaal %d actieve barista's per stad zijn.".formatted(MAX_ACTIEVE_BARISTAS_PER_STAD));
+        }
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/validator/BaristaUniekValidator.java">
+package be.hogent.baristajob2026.validator;
+
+import be.hogent.baristajob2026.dto.request.BaristaInputDTO;
+import be.hogent.baristajob2026.service.BaristaService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+
+// voor email en studentenkaartnummer moet er een unieke barista zijn (dus geen andere barista met hetzelfde email of studentenkaartnummer)
+// check over twee velden, dus geen annotation, maar een validator klasse
+@Component // geen naam nodig want wij gebruiken advice
+@RequiredArgsConstructor
+public class BaristaUniekValidator implements Validator {
+
+    private final BaristaService baristaService;
+
+    // over welke object gaat her hier, welke type wordt gedefineerd in supports
+    @Override
+    public boolean supports(Class<?> klass) {
+        return BaristaInputDTO.class.isAssignableFrom(klass);
+    }
+
+    // je geeft een object van jouw record = target
+    // en de errors van de binding result = errors
+    @Override
+    public void validate(Object target, Errors errors) {
+        // we gaan niet met object werken dus type casting
+        BaristaInputDTO dto = (BaristaInputDTO) target;
+
+
+        if (dto.email() != null && baristaService.bestaatAndereBaristaMetEmail(dto.email(), dto.id())) {
+            errors.rejectValue("email", "duplicate.barista.email", "Dit e-mailadres is al in gebruik.");
+        }
+
+        if (dto.studentenkaartNummer() != null
+                && baristaService.bestaatAndereBaristaMetStudentenkaart(dto.studentenkaartNummer(), dto.id())) {
+            errors.rejectValue("studentenkaartNummer", "duplicate.barista.studentenkaart",
+                    "Dit studentenkaartnummer is al in gebruik.");
+        }
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/validator/VestigingUniekValidator.java">
+package be.hogent.baristajob2026.validator;
+
+import be.hogent.baristajob2026.dto.request.VestigingInputDTO;
+import be.hogent.baristajob2026.service.VestigingService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+import java.util.Optional;
+
+// geen twee vestigingen met dezelfde combinatie naam + stad
+// check over twee velden samen, dus geen annotation maar een validator klasse
+@Component
+@RequiredArgsConstructor
+public class VestigingUniekValidator implements Validator {
+    private final VestigingService vestigingService;
+
+    @Override
+    public boolean supports(Class<?> klass) {
+        return VestigingInputDTO.class.isAssignableFrom(klass);
+    }
+
+    @Override
+    public void validate(Object target, Errors errors) {
+        // we gaan niet met object werken dus type casting
+        VestigingInputDTO dto = (VestigingInputDTO) target;
+
+        if (dto.naam() != null && dto.stad() != null
+                && vestigingService.bestaatAndereVestigingMetNaamEnStad(dto.naam(), dto.stad(), dto.id())) {
+            errors.rejectValue("naam", "duplicate.vestiging.naamstad",
+                    "Er bestaat al een vestiging met deze naam in deze stad.");
+        }
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/BaristaJob2026Application.java">
+package be.hogent.baristajob2026;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@SpringBootApplication
+public class BaristaJob2026Application implements WebMvcConfigurer {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BaristaJob2026Application.class, args);
+    }
+
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addRedirectViewController("/", "/overview");
+        registry.addViewController("/login").setViewName("login");
+        registry.addViewController("/403").setViewName("error/403");
+    }
+
+}
+</file>
+
+<file path="src/main/resources/templates/error/403.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Access is denied</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<header>
+
+</header>
+<h1>HTTP Status 403 - Access is denied</h1>
+
+<br><br>
+<button type="button" onclick="goBack()">Back</button>
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/templates/barista-form.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${baristaInputDTO.id} != null ? #{barista.form.titel.bewerken} : #{barista.form.titel.nieuw}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${baristaInputDTO.id} != null ? #{barista.form.titel.bewerken} : #{barista.form.titel.nieuw}"></h1>
+
+<form th:action="${baristaInputDTO.id} != null ? |/barista/${baristaInputDTO.id}/bewerken| : @{/barista/nieuw}"
+      th:object="${baristaInputDTO}" method="post">
+
+    <!-- nodig zodat BaristaUniekValidator zichzelf kan uitsluiten bij bewerken -->
+    <input type="hidden" th:field="*{id}" />
+
+    <p>
+        <label th:text="#{barista.form.voornaam.label}"></label> <input type="text" th:field="*{voornaam}" size="20"/>
+        <span th:if="${#fields.hasErrors('voornaam')}" th:errorclass="error" th:errors="*{voornaam}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.achternaam.label}"></label> <input type="text" th:field="*{achternaam}" size="20"/>
+        <span th:if="${#fields.hasErrors('achternaam')}" th:errorclass="error" th:errors="*{achternaam}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.email.label}"></label> <input type="text" th:field="*{email}" size="20"/>
+        <span th:if="${#fields.hasErrors('email')}" th:errorclass="error" th:errors="*{email}"></span>
+    </p>
+
+    <p>
+        <!-- input type=date vereist ISO (yyyy-MM-dd), dus dit veld gebruikt geen resource bundle datumformaat -->
+        <label th:text="#{barista.form.geboortedatum.label}"></label> <input type="date" th:field="*{geboortedatum}"/>
+        <span th:if="${#fields.hasErrors('geboortedatum')}" th:errorclass="error" th:errors="*{geboortedatum}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.studentenkaart.label}"></label> <input type="text" th:field="*{studentenkaartNummer}" size="20"/>
+        <span th:if="${#fields.hasErrors('studentenkaartNummer')}" th:errorclass="error" th:errors="*{studentenkaartNummer}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.actief.label}"></label> <input type="checkbox" th:field="*{actief}"/>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.vestiging.label}"></label>
+        <select th:field="*{vestigingId}">
+            <option value="" th:text="#{barista.form.vestiging.kies}"></option>
+            <option th:each="v : ${vestigingen}" th:value="${v.id}"
+                    th:text="${v.naam} + ' (' + ${v.stad} + ')'"></option>
+        </select>
+        <span th:if="${#fields.hasErrors('vestigingId')}" th:errorclass="error" th:errors="*{vestigingId}"></span>
+    </p>
+
+    <p>
+        <button type="submit" th:text="#{barista.form.submit}"></button>
+    </p>
+
+</form>
+
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/templates/opleiding-form.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Opleiding</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${opleidingInputDTO.id} != null ? 'Opleiding bewerken' : 'Opleiding toevoegen'"></h1>
+
+<form th:action="${opleidingInputDTO.id} != null ? |/opleiding/${opleidingInputDTO.id}/bewerken| : @{/opleiding/nieuw}"
+      th:object="${opleidingInputDTO}" method="post">
+
+    <input type="hidden" th:field="*{id}" />
+
+    <p>
+        <label>Titel:</label> <input type="text" th:field="*{titel}" size="30"/>
+        <span th:if="${#fields.hasErrors('titel')}" th:errorclass="error" th:errors="*{titel}"></span>
+    </p>
+    <p>
+        <label>Beschrijving:</label> <textarea th:field="*{beschrijving}" rows="4" cols="40"></textarea>
+        <span th:if="${#fields.hasErrors('beschrijving')}" th:errorclass="error" th:errors="*{beschrijving}"></span>
+    </p>
+    <p>
+        <label>Datum:</label> <input type="date" th:field="*{datum}"/>
+        <span th:if="${#fields.hasErrors('datum')}" th:errorclass="error" th:errors="*{datum}"></span>
+    </p>
+    <p>
+        <label>Duur (u):</label> <input type="number" th:field="*{duurInUur}" min="1"/>
+        <span th:if="${#fields.hasErrors('duurInUur')}" th:errorclass="error" th:errors="*{duurInUur}"></span>
+    </p>
+    <p>
+        <label>Maximaal aantal deelnemers:</label> <input type="number" th:field="*{maxDeelnemers}" min="1"/>
+        <span th:if="${#fields.hasErrors('maxDeelnemers')}" th:errorclass="error" th:errors="*{maxDeelnemers}"></span>
+    </p>
+    <p>
+        <label>Vestiging:</label>
+        <select th:field="*{vestigingId}">
+            <option value="">-- kies een vestiging --</option>
+            <option th:each="v : ${vestigingen}" th:value="${v.id}"
+                    th:text="${v.naam} + ' (' + ${v.stad} + ')'"></option>
+        </select>
+        <span th:if="${#fields.hasErrors('vestigingId')}" th:errorclass="error" th:errors="*{vestigingId}"></span>
+    </p>
+    <p><button type="submit">OK</button></p>
+</form>
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/templates/shift-form.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Shift</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${shiftInputDTO.id} != null ? 'Shift bewerken' : 'Shift toevoegen'"></h1>
+
+<form th:action="${shiftInputDTO.id} != null ? |/shift/${shiftInputDTO.id}/bewerken| : @{/shift/nieuw}"
+      th:object="${shiftInputDTO}" method="post">
+
+    <input type="hidden" th:field="*{id}" />
+
+    <p>
+        <label>Datum:</label> <input type="date" th:field="*{datum}"/>
+        <span th:if="${#fields.hasErrors('datum')}" th:errorclass="error" th:errors="*{datum}"></span>
+    </p>
+    <p>
+        <label>Startuur:</label> <input type="time" th:field="*{startUur}"/>
+        <span th:if="${#fields.hasErrors('startUur')}" th:errorclass="error" th:errors="*{startUur}"></span>
+    </p>
+    <p>
+        <label>Einduur:</label> <input type="time" th:field="*{eindUur}"/>
+        <span th:if="${#fields.hasErrors('eindUur')}" th:errorclass="error" th:errors="*{eindUur}"></span>
+    </p>
+    <p>
+        <label>Rol:</label>
+        <select th:field="*{rol}">
+            <option th:each="r : ${shiftRollen}" th:value="${r}" th:text="${r}"></option>
+        </select>
+        <span th:if="${#fields.hasErrors('rol')}" th:errorclass="error" th:errors="*{rol}"></span>
+    </p>
+    <p>
+        <label>Maximaal aantal barista's:</label> <input type="number" th:field="*{maxBaristas}" min="1"/>
+        <span th:if="${#fields.hasErrors('maxBaristas')}" th:errorclass="error" th:errors="*{maxBaristas}"></span>
+    </p>
+    <p>
+        <label>Vestiging:</label>
+        <select th:field="*{vestigingId}">
+            <option value="">-- kies een vestiging --</option>
+            <option th:each="v : ${vestigingen}" th:value="${v.id}"
+                    th:text="${v.naam} + ' (' + ${v.stad} + ')'"></option>
+        </select>
+        <span th:if="${#fields.hasErrors('vestigingId')}" th:errorclass="error" th:errors="*{vestigingId}"></span>
+    </p>
+    <p><button type="submit">OK</button></p>
+</form>
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/templates/vestiging-form.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Vestiging</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${vestigingInputDTO.id} != null ? 'Vestiging bewerken' : 'Vestiging toevoegen'"></h1>
+
+<form th:action="${vestigingInputDTO.id} != null ? |/vestiging/${vestigingInputDTO.id}/bewerken| : @{/vestiging/nieuw}"
+      th:object="${vestigingInputDTO}" method="post">
+
+    <!-- nodig zodat VestigingUniekValidator zichzelf kan uitsluiten bij bewerken -->
+    <input type="hidden" th:field="*{id}" />
+
+    <p>
+        <label>Naam:</label> <input type="text" th:field="*{naam}" size="20"/>
+        <span th:if="${#fields.hasErrors('naam')}" th:errorclass="error" th:errors="*{naam}"></span>
+    </p>
+
+    <p>
+        <label>Stad:</label> <input type="text" th:field="*{stad}" size="20"/>
+        <span th:if="${#fields.hasErrors('stad')}" th:errorclass="error" th:errors="*{stad}"></span>
+    </p>
+
+    <p>
+        <label>Aantal zitplaatsen:</label> <input type="number" th:field="*{aantalZitplaatsen}" size="5"/>
+        <span th:if="${#fields.hasErrors('aantalZitplaatsen')}" th:errorclass="error" th:errors="*{aantalZitplaatsen}"></span>
+    </p>
+
+    <p>
+        <button type="submit">OK</button>
+    </p>
+
+</form>
+
+</body>
+</html>
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/controller/OpleidingController.java">
+package be.hogent.baristajob2026.controller;
+
+import be.hogent.baristajob2026.dto.request.FilterOpleidingDTO;
+import be.hogent.baristajob2026.service.BaristaService;
+import be.hogent.baristajob2026.service.OpleidingService;
+import be.hogent.baristajob2026.service.VestigingService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import be.hogent.baristajob2026.dto.request.OpleidingInputDTO;
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/opleiding")
+public class OpleidingController {
+    private final OpleidingService opleidingService;
+    private final VestigingService vestigingService; // nodig voor vestiging-filter dropdown
+    private final BaristaService baristaService;      // nodig om ingelogde barista-id op te zoeken
+
+    // toont het opleidingsscherm (zichtbaar voor iedereen)
+    // RBAC op deelnemerslijst/inschrijfknop gebeurt in de view (sec:authorize)
+    // we passen een object van authentication omdat we moeten weten of de huidige gebruiker een barista is (voor alReedsIngeschreven + inschrijfknop)
+    // anonieme gebruikers en admins krijgen null, zij kunnen zich niet inschrijven
+    @GetMapping
+    public String showOverview(@ModelAttribute("filterOpleidingDTO") FilterOpleidingDTO filterOpleidingDTO,
+                               Model model, Authentication authentication) {
+        Long baristaId = huidigeBaristaId(authentication);
+        addSharedAttributes(model, baristaId);
+        model.addAttribute("opleidingen", opleidingService.findFilteredOpleidingen(filterOpleidingDTO, baristaId));
+        return "opleiding-overview";
+    }
+
+    @PostMapping
+    public String processFilter(FilterOpleidingDTO filterOpleidingDTO, Model model, Authentication authentication) {
+        Long baristaId = huidigeBaristaId(authentication);
+        addSharedAttributes(model, baristaId);
+        model.addAttribute("opleidingen", opleidingService.findFilteredOpleidingen(filterOpleidingDTO, baristaId));
+        return "opleiding-overview";
+    }
+    // inschrijven voor een opleiding
+    @PostMapping("/{opleidingId}/inschrijven")
+    public String processInschrijven(@PathVariable Long opleidingId, Authentication authentication, RedirectAttributes ra) {
+        Long baristaId = baristaService.findIdByEmail(authentication.getName());
+        String foutmelding = opleidingService.inschrijven(opleidingId, baristaId);
+        if (foutmelding != null) {
+            ra.addFlashAttribute("foutmelding", foutmelding);
+        }
+        return "redirect:/opleiding";
+    }
+
+    @GetMapping("/nieuw")
+    public String showNieuwForm(@ModelAttribute("opleidingInputDTO") OpleidingInputDTO opleidingInputDTO, Model model) {
+        addFormAttributes(model);
+        return "opleiding-form";
+    }
+
+    @PostMapping("/nieuw")
+    public String processNieuwForm(@Valid OpleidingInputDTO opleidingInputDTO, BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            addFormAttributes(model);
+            return "opleiding-form";
+        }
+        opleidingService.createOpleiding(opleidingInputDTO);
+        return "redirect:/opleiding";
+    }
+
+    @GetMapping("/{id}/bewerken")
+    public String showBewerkenForm(@PathVariable Long id, Model model) {
+        model.addAttribute("opleidingInputDTO", opleidingService.findInputById(id));
+        addFormAttributes(model);
+        return "opleiding-form";
+    }
+
+    @PostMapping("/{id}/bewerken")
+    public String processBewerkenForm(@PathVariable Long id, @Valid OpleidingInputDTO opleidingInputDTO,
+                                      BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            addFormAttributes(model);
+            return "opleiding-form";
+        }
+        opleidingService.updateOpleiding(id, opleidingInputDTO);
+        return "redirect:/opleiding";
+    }
+    // gemeenschappelijke model-attributen voor GET en POST
+    private void addSharedAttributes(Model model, Long baristaId) {
+        model.addAttribute("vestigingen", vestigingService.findAll());
+        model.addAttribute("baristaId", baristaId); // nodig in de view om de inschrijf-URL op te bouwen
+    }
+
+    // enkel de vestigingen-dropdown, los van addSharedAttributes (die is specifiek voor de
+    // overview/filter-pagina's en heeft baristaId nodig, wat hier niet relevant is)
+    private void addFormAttributes(Model model) {
+        model.addAttribute("vestigingen", vestigingService.findAll());
+    }
+
+    // enkel ingelogde baristas hebben hier iets aan (voor alReedsIngeschreven + de inschrijfknop)
+    // anoniem en admin krijgen null, zij kunnen zich  niet inschrijven
+    private Long huidigeBaristaId(Authentication authentication) {
+        boolean isBarista = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_BARISTA"));
+        return isBarista ? baristaService.findIdByEmail(authentication.getName()) : null;
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/controller/ShiftController.java">
+package be.hogent.baristajob2026.controller;
+
+import be.hogent.baristajob2026.dto.request.ShiftInputDTO;
+import be.hogent.baristajob2026.model.ShiftRol;
+import be.hogent.baristajob2026.service.BaristaService;
+import be.hogent.baristajob2026.service.ShiftService;
+import be.hogent.baristajob2026.service.VestigingService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/shift")
+public class ShiftController {
+    private final ShiftService shiftService;
+    private final VestigingService vestigingService; // nodig voor vestiging-select in shift form
+    private final BaristaService baristaService; // nodig om ingelogde barista-id op te zoeken
+
+    // form voor het aanmaken/wijzigen van een nieuwe shift
+    @GetMapping("/nieuw")
+    public String showNieuwForm(@ModelAttribute("shiftInputDTO") ShiftInputDTO shiftInputDTO, Model model) {
+        addFormAttributes(model);
+        return "shift-form";
+    }
+
+    // verwerk de form submission voor het aanmaken van een nieuwe shift
+    @PostMapping("/nieuw")
+    public String processNieuwForm(@Valid ShiftInputDTO shiftInputDTO, BindingResult result, Model model) {
+
+        if (result.hasErrors()) {
+            addFormAttributes(model);
+            return "shift-form";
+        }
+        shiftService.createShift(shiftInputDTO);
+        return "redirect:/vestiging/" + shiftInputDTO.vestigingId();
+    }
+
+    // reageer op GET request voor het bewerken van een bestaande shift
+    @GetMapping("/{id}/bewerken")
+    public String showBewerkenForm(@PathVariable Long id, Model model) {
+        model.addAttribute("shiftInputDTO", shiftService.findInputById(id)); // bestaande shift data toevoegen
+        addFormAttributes(model);
+        return "shift-form";
+    }
+
+    // reageer op POST request voor het bewerken van een bestaande shift
+    @PostMapping("/{id}/bewerken")
+    public String processBewerkenForm(@PathVariable Long id, @Valid ShiftInputDTO shiftInputDTO,
+                                      BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            addFormAttributes(model);
+            return "shift-form";
+        }
+        shiftService.updateShift(id, shiftInputDTO);
+        return "redirect:/vestiging/" + shiftInputDTO.vestigingId();
+    }
+    // reageer op POST request voor het verwijderen van een bestaande shift
+    @PostMapping("/{id}/verwijderen")
+    public String processVerwijderen(@PathVariable Long id) {
+        Long vestigingId = shiftService.deleteShift(id);
+        return vestigingId != null ? "redirect:/vestiging/" + vestigingId : "redirect:/overview";
+    }
+
+    // inschrijven voor een shift
+    @PostMapping("/{shiftId}/inschrijven")
+    public String processInschrijven(@PathVariable Long shiftId, Authentication authentication, RedirectAttributes ra) {
+        Long baristaId = baristaService.findIdByEmail(authentication.getName());
+        String foutmelding = shiftService.inschrijven(shiftId, baristaId);
+        if (foutmelding != null) {
+            ra.addFlashAttribute("foutmelding", foutmelding);
+        }
+        return "redirect:/barista/" + baristaId + "/shifts";
+    }
+
+    private void addFormAttributes(Model model) {
+        model.addAttribute("vestigingen", vestigingService.findAll());
+        model.addAttribute("shiftRollen", ShiftRol.values());
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/controller/VestigingController.java">
+package be.hogent.baristajob2026.controller;
+
+import be.hogent.baristajob2026.dto.request.VestigingInputDTO;
+import be.hogent.baristajob2026.dto.response.VestigingDetailDTO;
+import be.hogent.baristajob2026.service.VestigingService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/vestiging")
+public class VestigingController {
+    private final VestigingService vestigingService;
+
+    // detailpagina - zichtbaar voor iedereen
+    // RBAC op de baristagegevens binnen de pagina gebeurt via sec:authorize in de view
+    @GetMapping("/{id}")
+    public String showDetail(@PathVariable Long id, Model model) {
+        VestigingDetailDTO vestiging = vestigingService.findDetailById(id);
+        model.addAttribute("vestiging", vestiging);
+        return "vestiging-detail";
+    }
+
+    // toont het lege formulier voor een nieuwe vestiging (Admin)
+    @GetMapping("/nieuw")
+    public String showNieuwForm(@ModelAttribute("vestigingInputDTO") VestigingInputDTO vestigingInputDTO) {
+        return "vestiging-form";
+    }
+
+    @PostMapping("/nieuw")
+    public String processNieuwForm(@Valid VestigingInputDTO vestigingInputDTO, BindingResult result) {
+        if (result.hasErrors()) {
+            return "vestiging-form";
+        }
+        vestigingService.createVestiging(vestigingInputDTO);
+        return "redirect:/overview";
+    }
+
+    // toont het formulier voor een bestaande vestiging, vooraf ingevuld (Admin)
+    @GetMapping("/{id}/bewerken")
+    public String showBewerkenForm(@PathVariable Long id, Model model) {
+        model.addAttribute("vestigingInputDTO", vestigingService.findInputById(id));
+        return "vestiging-form";
+    }
+
+    @PostMapping("/{id}/bewerken")
+    public String processBewerkenForm(@PathVariable Long id,
+                                      @Valid VestigingInputDTO vestigingInputDTO,
+                                      BindingResult result) {
+        if (result.hasErrors()) {
+            return "vestiging-form";
+        }
+        vestigingService.updateVestiging(id, vestigingInputDTO);
+        return "redirect:/vestiging/" + id;
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/request/BaristaInputDTO.java">
+package be.hogent.baristajob2026.dto.request;
+
+import be.hogent.baristajob2026.validator.GeldigeLeeftijd;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
+
+// barista toevoegen/wijzigen form input
+public record BaristaInputDTO(
+        Long id,
+
+        //  Voornaam en achternaam moeten met een hoofdletter beginnen en minstens 2 letters bevatten
+        @Pattern(regexp = "^[A-Z][a-zA-Z]+$", message = "{barista.naam.pattern}")
+        String voornaam,
+
+        @Pattern(regexp = "^[A-Z][a-zA-Z]+$", message = "{barista.naam.pattern}")
+        String achternaam,
+
+        // exact 1 '@', niet als eerste/laatste teken toegelaten
+        @Pattern(regexp = "^[^@\\s]+@[^@\\s]+$", message = "{barista.email.pattern}")
+        String email,
+
+        // leeftijd tussen 16 en 30 jaar
+        @DateTimeFormat(pattern = "yyyy-MM-dd")
+        @GeldigeLeeftijd(min = 16, max = 30, message = "{barista.leeftijd.range}")
+        LocalDate geboortedatum,
+
+        @Pattern(regexp = "^\\d{8}$", message = "{barista.studentenkaart.pattern}")
+        String studentenkaartNummer,
+
+        Boolean actief,
+
+        @NotNull(message = "{barista.vestiging.required}")
+        Long vestigingId
+
+        ) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/BaristaOverviewDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+import be.hogent.baristajob2026.utils.GeboortedatumDeserializer;
+import be.hogent.baristajob2026.utils.GeboortedatumSerializer;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import java.time.LocalDate;
+import java.util.List;
+
+// voor barista overview sectie
+// wordt ook voor REST gebruikt - baristas in X stad
+@JsonPropertyOrder({"barista_id", "voornaam", "achternaam", "stad", "actief", "geboortedatum", "aantal_shifts", "opleidingen"})
+public record BaristaOverviewDTO(
+        @JsonProperty("barista_id")
+        Long id,
+        String voornaam,
+        String achternaam,
+        String stad,
+        boolean actief,
+        @JsonSerialize(using = GeboortedatumSerializer.class)
+        @JsonDeserialize(using = GeboortedatumDeserializer.class)
+        LocalDate geboortedatum,
+        @JsonProperty("aantal_shifts")
+        int aantalShifts,
+        List<OpleidingOverviewDTO> opleidingen
+) {}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/dto/response/OpleidingOverviewDTO.java">
+package be.hogent.baristajob2026.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+// voor detail pagina van een barista "voltooide/geplande opleidingen"
+// voor REST - opleidingen per vestiging
+@JsonPropertyOrder({"opleiding_id", "titel"})
+public record OpleidingOverviewDTO(
+        @JsonProperty("opleiding_id")
+        Long id, // wordt gebruikt als vestigingId in de API call
+        String titel) {
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/model/Barista.java">
+package be.hogent.baristajob2026.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Getter
+@Setter // setter nodig voor barista form
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // nodig voor JPA-ORM tool
+@AllArgsConstructor // voor builder
+@Builder
+@EqualsAndHashCode(of = {"email", "studentenkaartNummer"})
+@ToString(exclude = "id")
+public class Barista {
+
+    @Id // PK
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // PK is door db ingevuld + auto increment
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String studentenkaartNummer;
+
+    @Column(nullable = false)
+    private String voornaam;
+
+    @Column(nullable = false)
+    private String achternaam;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+
+    @Column(nullable = false)
+    private LocalDate geboortedatum;
+
+    @Column(nullable = false)
+    private boolean actief;
+
+    @Column(nullable = false)
+    private boolean administratiefGeblokkeerd;
+
+    // Barista is de owning side van de relaties, mapping by staat dus in de inverse sides
+    @ManyToOne
+    private Vestiging vestiging;
+
+    @ManyToMany
+    private Set<Shift> shifts = new HashSet<>();
+
+    @ManyToMany
+    private Set<Opleiding> opleidings = new HashSet<>();
+
+    @Enumerated(EnumType.STRING)
+    private ShiftRol shiftRol;
+
+    // security rolen
+    @Enumerated(EnumType.STRING)
+    private Rol rol;
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/model/Opleiding.java">
+package be.hogent.baristajob2026.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // nodig voor JPA-ORM tool
+@AllArgsConstructor // voor builder
+@Builder
+@EqualsAndHashCode(of = {"titel", "datum", "vestiging"})
+@ToString(exclude = "id")
+public class Opleiding {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String titel;
+
+    @Column(nullable = false)
+    private String beschrijving;
+
+    @Column(nullable = false)
+    private LocalDate datum;
+
+    @Column(nullable = false)
+    private int duurInUur;
+
+    @Column(nullable = false)
+    private int maxDeelnemers;
+
+    @ManyToOne
+    private Vestiging vestiging;
+
+    @ManyToMany(mappedBy = "opleidings")
+    private Set<Barista> deelnemers = new HashSet<>();
+
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/service/ShiftService.java">
+package be.hogent.baristajob2026.service;
+
+import be.hogent.baristajob2026.dto.request.ShiftInputDTO;
+import be.hogent.baristajob2026.dto.response.ShiftOverviewDTO;
+import be.hogent.baristajob2026.exception.BaristaNotFoundException;
+import be.hogent.baristajob2026.exception.ShiftNotFoundException;
+import be.hogent.baristajob2026.exception.VestigingNotFoundException;
+import be.hogent.baristajob2026.model.Barista;
+import be.hogent.baristajob2026.model.Shift;
+import be.hogent.baristajob2026.model.Vestiging;
+import be.hogent.baristajob2026.repository.BaristaRepository;
+import be.hogent.baristajob2026.repository.ShiftRepository;
+import be.hogent.baristajob2026.repository.VestigingRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ShiftService {
+
+    // maximaal 5 shifts per week per barista
+    private static final int MAX_SHIFTS_PER_WEEK = 5;
+    // een barista mag zich niet inschrijven voor meer dan 30 uur per week
+    private static final int MAX_UREN_PER_WEEK = 30;
+
+
+    private final ShiftRepository shiftRepository;
+    private final VestigingRepository vestigingRepository; // nodig voor shift toevoegen/wijzigen
+    private final BaristaRepository baristaRepository; // nodig voor inschrijven
+
+    // convert to DTO methoden
+    private ShiftOverviewDTO toOverviewDTO(Shift s) {
+        return new ShiftOverviewDTO(
+                s.getId(),
+                s.getDatum(),
+                s.getStartUur(),
+                s.getEindUur(),
+                s.getRol().name(),
+                s.getVestiging() != null ? s.getVestiging().getNaam() : null,
+                s.getIngeschrevenBaristas().size(),
+                s.getMaxBaristas()
+        );
+    }
+
+    // voor shift toevoegen/wijzigen form
+    public ShiftInputDTO toInputDTO(Shift s) {
+        return new ShiftInputDTO(
+                s.getId(),
+                s.getDatum(),
+                s.getStartUur(),
+                s.getEindUur(),
+                s.getRol(),
+                s.getMaxBaristas(),
+                s.getVestiging() != null ? s.getVestiging().getId() : null
+        );
+    }
+
+    // getX methoden
+
+    // voor shiftpagina van een barista
+    // toekomstige, niet-volzette shifts in de eigen vestiging waarvoor hij/zij nog niet is ingeschreven
+    public List<ShiftOverviewDTO> findBeschikbaarVoorBarista(Long baristaId) {
+        Barista barista = baristaRepository.findById(baristaId)
+                .orElseThrow(() -> new BaristaNotFoundException(baristaId));
+
+        // zonder vestiging kan een barista geen beschikbare shifts hebben
+        // voorkomt ook nullpointer bij barista.getVestiging().getId() in de query hieronder
+        if (barista.getVestiging() == null) {
+            return List.of();
+        }
+
+        LocalDate vandaag = LocalDate.now();
+
+        return shiftRepository.findByVestigingId(barista.getVestiging().getId()).stream()
+                .filter(s -> !s.getDatum().isBefore(vandaag)) // enkel toekomstige shifts
+                .filter(s -> s.getIngeschrevenBaristas().size() < s.getMaxBaristas()) // nog niet volzet
+                .filter(s -> !s.getIngeschrevenBaristas().contains(barista)) // niet reeds ingeschreven
+                .sorted(Comparator.comparing(Shift::getDatum))
+                .map(this::toOverviewDTO)
+                .toList();
+    }
+
+    // voor shiftpagina van een barista: eigen (toekomstige) shifts
+    public List<ShiftOverviewDTO> findEigenShiften(Long baristaId) {
+        Barista barista = baristaRepository.findById(baristaId)
+                .orElseThrow(() -> new BaristaNotFoundException(baristaId));
+
+        LocalDate vandaag = LocalDate.now();
+
+        return barista.getShifts().stream()
+                .filter(s -> !s.getDatum().isBefore(vandaag))
+                .sorted(Comparator.comparing(Shift::getDatum))
+                .map(this::toOverviewDTO)
+                .toList();
+    }
+
+    // voor GET /shift/{id}/bewerken (bewerken van een bestaande shift) - de bestaande shift data wordt in de form gezet
+    public ShiftInputDTO findInputById(Long id) {
+        Shift s = shiftRepository.findById(id)
+                .orElseThrow(() -> new ShiftNotFoundException(id));
+        return toInputDTO(s);
+    }
+
+    // voor POST /shift/nieuw (shift aanmaken)
+    public void createShift(ShiftInputDTO dto) {
+        Vestiging vestiging = vestigingRepository.findById(dto.vestigingId())
+                .orElseThrow(() -> new VestigingNotFoundException(dto.vestigingId()));
+
+        Shift shift = Shift.builder()
+                .datum(dto.datum())
+                .startUur(dto.startUur())
+                .eindUur(dto.eindUur())
+                .rol(dto.rol())
+                .maxBaristas(dto.maxBaristas())
+                .vestiging(vestiging)
+                .ingeschrevenBaristas(new HashSet<>())
+                .build();
+
+        shiftRepository.save(shift);
+    }
+
+    // voor POST /shift/{id}/bewerken
+    public void updateShift(Long id, ShiftInputDTO dto) {
+        Shift shift = shiftRepository.findById(id)
+                .orElseThrow(() -> new ShiftNotFoundException(id));
+        Vestiging vestiging = vestigingRepository.findById(dto.vestigingId())
+                .orElseThrow(() -> new VestigingNotFoundException(dto.vestigingId()));
+
+        shift.setDatum(dto.datum());
+        shift.setStartUur(dto.startUur());
+        shift.setEindUur(dto.eindUur());
+        shift.setRol(dto.rol());
+        shift.setMaxBaristas(dto.maxBaristas());
+        shift.setVestiging(vestiging);
+
+        shiftRepository.save(shift);
+    }
+
+    // voor POST /shift/{id}/verwijderen - geeft de vestigingId terug zodat de
+    // controller na verwijderen terug naar de juiste vestigingpagina kan sturen
+    public Long deleteShift(Long id) {
+        Shift shift = shiftRepository.findById(id)
+                .orElseThrow(() -> new ShiftNotFoundException(id));
+        Long vestigingId = shift.getVestiging() != null ? shift.getVestiging().getId() : null;
+        shiftRepository.delete(shift);
+        return vestigingId;
+    }
+
+    // voor POST /barista/{baristaId}/shifts/{shiftId}/inschrijven
+    // alle bedrijfsregels rond inschrijven staan hier gebundeld
+    public String inschrijven(Long shiftId, Long baristaId) {
+        Shift shift = shiftRepository.findById(shiftId)
+                .orElseThrow(() -> new ShiftNotFoundException(shiftId));
+        Barista barista = baristaRepository.findById(baristaId)
+                .orElseThrow(() -> new BaristaNotFoundException(baristaId));
+
+        // er is geen form object om errors te binden (BindingResult), hier doen we gewoon een inschrijf
+        // poging en returnen een foutmelding als er iets mis is, anders null
+        // het is geen form submission dus we hoeven geen (custom) annotations/validators te gebruiken
+
+        // additionele businessregel; geblokkeerde baristas mogen zich niet inschrijven
+        if (barista.isAdministratiefGeblokkeerd()) {
+            return "Je hebt nog openstaande administratieve problemen en kan je niet inschrijven voor shifts.";
+        }
+
+        if (shift.getIngeschrevenBaristas().contains(barista)) {
+            return "Je bent al ingeschreven voor deze shift.";
+        }
+
+        // per vestiging mag een shift maximaal X barista's bevatten
+        if (shift.getIngeschrevenBaristas().size() >= shift.getMaxBaristas()) {
+            return "Deze shift is volzet.";
+        }
+
+        // Een barista mag geen overlappende shifts hebben
+        boolean overlapt = barista.getShifts().stream()
+                .anyMatch(bestaande -> overlapt(bestaande, shift));
+        if (overlapt) {
+            return "Deze shift overlapt met een shift waarvoor je al bent ingeschreven.";
+        }
+
+        // Maximaal 5 shifts per week per barista
+        long shiftsInZelfdeWeek = barista.getShifts().stream()
+                .filter(bestaande -> zelfdeWeek(bestaande.getDatum(), shift.getDatum()))
+                .count();
+        if (shiftsInZelfdeWeek + 1 > MAX_SHIFTS_PER_WEEK) {
+            return "Je mag maximaal %d shifts per week hebben.".formatted(MAX_SHIFTS_PER_WEEK);
+        }
+
+        // Een barista mag zich niet inschrijven voor meer dan 30 uur per week
+        long minutenInZelfdeWeek = barista.getShifts().stream()
+                .filter(bestaande -> zelfdeWeek(bestaande.getDatum(), shift.getDatum()))
+                .mapToLong(this::duurInMinuten)
+                .sum();
+        if (minutenInZelfdeWeek + duurInMinuten(shift) > MAX_UREN_PER_WEEK * 60) {
+            return "Je mag maximaal %d uur per week inschrijven.".formatted(MAX_UREN_PER_WEEK);
+        }
+
+        // Barista is de owning side van de relatie, dus we mogen hier gewoon toevoegen en saven
+        barista.getShifts().add(shift);
+        baristaRepository.save(barista);
+        return null;
+    }
+
+    // helper methoden voor de bedrijfsregels hierboven
+
+    private boolean overlapt(Shift a, Shift b) {
+        return a.getDatum().equals(b.getDatum())
+                && a.getStartUur().isBefore(b.getEindUur())
+                && b.getStartUur().isBefore(a.getEindUur());
+    }
+
+    private boolean zelfdeWeek(LocalDate d1, LocalDate d2) {
+        WeekFields weekFields = WeekFields.ISO;
+        return d1.get(weekFields.weekBasedYear()) == d2.get(weekFields.weekBasedYear())
+                && d1.get(weekFields.weekOfWeekBasedYear()) == d2.get(weekFields.weekOfWeekBasedYear());
+    }
+
+    private long duurInMinuten(Shift s) {
+        return Duration.between(s.getStartUur(), s.getEindUur()).toMinutes();
+    }
+
+    // voor REST: aantal beschikbare shifts voor een barista
+    // hergebruikt findBeschikbaarVoorBarista(), dus zelfde regels (eigen vestiging,
+    // toekomstig, niet volzet, niet al ingeschreven) en zelfde BaristaNotFoundException
+    public int countBeschikbaarVoorBarista(Long baristaId) {
+        return findBeschikbaarVoorBarista(baristaId).size();
+    }
+}
+</file>
+
+<file path="src/main/resources/i18n/messages_en.properties">
+# BaristaInputDTO jakarta annotation messages
+barista.naam.pattern=First and last name must start with a capital letter and contain at least 2 letters.
+barista.email.pattern=Enter a valid email address (exactly 1 '@', not at the start or end).
+barista.leeftijd.range=Age must be between 16 and 30 years.
+barista.studentenkaart.pattern=The student card number must consist of exactly 8 digits.
+barista.vestiging.required=Choose a location.
+
+# BaristaUniekValidator messages
+duplicate.barista.email=This email address is already in use by another barista.
+duplicate.barista.studentenkaart=This student card number is already in use by another barista.
+
+# ShiftInputDTO jakarta annotation messages
+shift.datum.required=Date is required.
+shift.startuur.required=Start time is required.
+shift.einduur.required=End time is required.
+shift.rol.required=Choose a role.
+shift.maxbaristas.min=There must be room for at least 1 barista.
+shift.vestiging.required=Choose a location.
+
+# GeldigeShiftTijdenConstraintValidator messages
+shift.tijden.volgorde=The start time must be before the end time.
+shift.tijden.duur=A shift must last at least 2 hours and at most 8 hours.
+
+# VestigingInputDTO jakarta annotation messages
+vestiging.naam.required=Name is required.
+vestiging.stad.required=City is required.
+vestiging.zitplaatsen.positive=Number of seats must be greater than 0.
+
+# VestigingUniekValidator messages
+duplicate.vestiging.naamstad=A location with this name already exists in this city.
+
+# BaristaStadLimietValidator messages
+barista.stad.limiet=There can be a maximum of 50 active baristas per city.
+
+# OpleidingInputDTO jakarta annotation messages
+opleiding.titel.required=Title is required.
+opleiding.beschrijving.required=Description is required.
+opleiding.datum.required=Date is required.
+opleiding.duur.positive=Duration must be greater than 0.
+opleiding.maxdeelnemers.positive=Maximum number of participants must be greater than 0.
+opleiding.vestiging.required=Choose a location.
+
+# shared labels
+common.naam=Name
+common.stad=City
+common.actief=Active
+common.ja=Yes
+common.nee=No
+
+# datumformaat voor weergave in de UI
+date.format=MM/dd/yyyy
+# h -> 01-12, a -> AM/PM
+time.format=hh:mm a 
+
+# navbar.html
+nav.overview=Overview
+nav.opleidingen=Trainings
+nav.mijnshifts=My shifts
+nav.mijnprofiel=My profile
+nav.baristatoevoegen=Add barista
+nav.shifttoevoegen=Add shift
+nav.vestigingtoevoegen=Add location
+nav.opleidingtoevoegen=Add training
+nav.logout=Logout
+nav.login=Login
+nav.lang.nl=Nederlands
+nav.lang.en=English
+
+# overview.html
+overview.title=Overview
+overview.vestigingen.title=Locations
+overview.vestigingen.zitplaatsen=Seats
+overview.vestigingen.actievebaristas=Active baristas
+overview.filter.title=Filter baristas
+overview.filter.stad.label=Choose city:
+overview.filter.stad.alle=All cities
+overview.filter.status.label=Choose status:
+overview.filter.status.alle=All
+overview.filter.status.actief=Active
+overview.filter.status.inactief=Inactive
+overview.filter.opleiding.label=Choose training:
+overview.filter.opleiding.alle=All trainings
+overview.filter.sort.label=Sort by:
+overview.filter.sort.geen=No sorting
+overview.filter.sort.naam=Name
+overview.filter.sort.shifts=Number of shifts
+overview.filter.sort.geboortedatum=Date of birth
+overview.filter.submit=Filter
+overview.baristas.title=Baristas
+overview.baristas.voornaam=First name
+overview.baristas.achternaam=Last name
+overview.baristas.geboortedatum=Date of birth
+overview.baristas.aantalshifts=Number of shifts
+overview.baristas.opleiding=Training
+
+# barista-form.html
+barista.form.titel.nieuw=Add barista
+barista.form.titel.bewerken=Edit barista
+barista.form.voornaam.label=First name:
+barista.form.achternaam.label=Last name:
+barista.form.email.label=Email:
+barista.form.geboortedatum.label=Date of birth:
+barista.form.studentenkaart.label=Student card number:
+barista.form.actief.label=Active:
+barista.form.vestiging.label=Location:
+barista.form.vestiging.kies=-- choose a location --
+barista.form.submit=OK
+</file>
+
+<file path="src/main/resources/i18n/messages_nl.properties">
+# BaristaInputDTO jakarta annotation boodschappen
+barista.naam.pattern=Voornaam en achternaam moeten met een hoofdletter beginnen en minstens 2 letters bevatten.
+barista.email.pattern=Vul een geldig e-mailadres in (exact 1 '@', niet aan begin of einde).
+barista.leeftijd.range=De leeftijd moet tussen 16 en 30 jaar liggen.
+barista.studentenkaart.pattern=Het studentenkaartnummer moet uit exact 8 cijfers bestaan.
+barista.vestiging.required=Kies een vestiging.
+
+# BaristaUniekValidator boodschappen
+duplicate.barista.email=Dit e-mailadres is al in gebruik door een andere barista.
+duplicate.barista.studentenkaart=Dit studentenkaartnummer is al in gebruik door een andere barista.
+
+# ShiftInputDTO jakarta annotation boodschappen
+shift.datum.required=Datum is verplicht.
+shift.startuur.required=Startuur is verplicht.
+shift.einduur.required=Einduur is verplicht.
+shift.rol.required=Kies een rol.
+shift.maxbaristas.min=Er moet plaats zijn voor minstens 1 barista.
+shift.vestiging.required=Kies een vestiging.
+
+# GeldigeShiftTijdenConstraintValidator boodschappen
+shift.tijden.volgorde=Het startuur moet voor het einduur liggen.
+shift.tijden.duur=Een shift moet minstens 2 uur en maximaal 8 uur duren.
+
+# VestigingInputDTO jakarta annotation boodschappen
+vestiging.naam.required=Naam is verplicht.
+vestiging.stad.required=Stad is verplicht.
+vestiging.zitplaatsen.positive=Aantal zitplaatsen moet groter zijn dan 0.
+
+# VestigingUniekValidator boodschappen
+duplicate.vestiging.naamstad=Er bestaat al een vestiging met deze naam in deze stad.
+
+# BaristaStadLimietValidator boodschappen
+barista.stad.limiet=Er mogen maximaal 50 actieve barista's per stad zijn.
+
+# OpleidingInputDTO jakarta annotation boodschappen
+opleiding.titel.required=Titel is verplicht.
+opleiding.beschrijving.required=Beschrijving is verplicht.
+opleiding.datum.required=Datum is verplicht.
+opleiding.duur.positive=Duur moet groter zijn dan 0.
+opleiding.maxdeelnemers.positive=Maximaal aantal deelnemers moet groter zijn dan 0.
+opleiding.vestiging.required=Kies een vestiging.
+
+# gedeelde labels (meerdere schermen)
+common.naam=Naam
+common.stad=Stad
+common.actief=Actief
+common.ja=Ja
+common.nee=Nee
+
+# datumformaat voor weergave in de UI
+date.format=dd/MM/yyyy
+# HH -> 00-23
+time.format=HH:mm 
+
+# navbar.html
+nav.overview=Overzicht
+nav.opleidingen=Opleidingen
+nav.mijnshifts=Mijn shifts
+nav.mijnprofiel=Mijn profiel
+nav.baristatoevoegen=Barista toevoegen
+nav.shifttoevoegen=Shift toevoegen
+nav.vestigingtoevoegen=Vestiging toevoegen
+nav.opleidingtoevoegen=Opleiding toevoegen
+nav.logout=Logout
+nav.login=Login
+nav.lang.nl=Nederlands
+nav.lang.en=English
+
+# overview.html
+overview.title=Overzicht
+overview.vestigingen.title=Vestigingen
+overview.vestigingen.zitplaatsen=Zitplaatsen
+overview.vestigingen.actievebaristas=Actieve baristas
+overview.filter.title=Filter barista's
+overview.filter.stad.label=Kies stad:
+overview.filter.stad.alle=Alle steden
+overview.filter.status.label=Kies status:
+overview.filter.status.alle=Alles
+overview.filter.status.actief=Actief
+overview.filter.status.inactief=Inactief
+overview.filter.opleiding.label=Kies opleiding:
+overview.filter.opleiding.alle=Alle opleidingen
+overview.filter.sort.label=Sorteer op:
+overview.filter.sort.geen=Geen sortering
+overview.filter.sort.naam=Naam
+overview.filter.sort.shifts=Aantal shifts
+overview.filter.sort.geboortedatum=Geboortedatum
+overview.filter.submit=Filter
+overview.baristas.title=Barista's
+overview.baristas.voornaam=Voornaam
+overview.baristas.achternaam=Achternaam
+overview.baristas.geboortedatum=Geboortedatum
+overview.baristas.aantalshifts=Aantal shifts
+overview.baristas.opleiding=Opleiding
+
+# barista-form.html
+barista.form.titel.nieuw=Barista toevoegen
+barista.form.titel.bewerken=Barista bewerken
+barista.form.voornaam.label=Voornaam:
+barista.form.achternaam.label=Achternaam:
+barista.form.email.label=Email:
+barista.form.geboortedatum.label=Geboortedatum:
+barista.form.studentenkaart.label=Studentenkaartnummer:
+barista.form.actief.label=Actief:
+barista.form.vestiging.label=Vestiging:
+barista.form.vestiging.kies=-- kies een vestiging --
+barista.form.submit=OK
+</file>
+
+<file path="src/main/resources/templates/barista-detail.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${barista.voornaam} + ' ' + ${barista.achternaam}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script type="text/javascript">
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${barista.voornaam} + ' ' + ${barista.achternaam}"></h1>
+
+<div class="action-bar">
+    <!-- shifts beheren/inschrijven: enkel zichtbaar voor de betreffende barista zelf -->
+    <a class="btn" th:if="${isEigenProfiel}" th:href="|/barista/${barista.id}/shifts|">Shifts beheren</a>
+    <!-- barista bewerken: enkel zichtbaar voor admins -->
+    <a class="btn" sec:authorize="hasRole('ADMIN')" th:href="|/barista/${barista.id}/bewerken|">Barista bewerken</a>
+</div>
+
+<!-- persoonlijke gegevens -->
+<table>
+    <tr>
+        <th>Email</th>
+        <td th:text="${barista.email}"></td>
+    </tr>
+    <tr>
+        <th>Geboortedatum</th>
+        <td th:with="datePattern=#{date.format}"
+            th:text="${#temporals.format(barista.geboortedatum, datePattern)}"></td>
+    </tr>
+    <tr>
+        <th>Studentenkaartnummer</th>
+        <td th:text="${barista.studentenkaartNummer}"></td>
+    </tr>
+    <tr>
+        <th>Actief</th>
+        <td th:text="${barista.actief} ? 'Ja' : 'Nee'"></td>
+    </tr>
+    <tr>
+        <th>Vestiging</th>
+        <td th:text="${barista.vestigingNaam}"></td>
+    </tr>
+</table>
+
+<!-- shifts -->
+<h2>Toekomstige shifts</h2>
+<table  th:with="datePattern=#{date.format}, timePattern=#{time.format}">
+    <tr>
+        <th>Datum</th>
+        <th>Startuur</th>
+        <th>Einduur</th>
+    </tr>
+    <tr th:each="s : ${barista.toekomstigeShifts}">
+        <td th:text="${#temporals.format(s.datum, datePattern)}"></td>
+        <td th:text="${#temporals.format(s.startUur, timePattern)}"></td>
+        <td th:text="${#temporals.format(s.eindUur, timePattern)}"></td>
+    </tr>
+</table>
+
+<h2>Afgelopen shifts</h2>
+<table>
+    <tr>
+        <th>Datum</th>
+        <th>Startuur</th>
+        <th>Einduur</th>
+    </tr>
+    <tr th:each="s : ${barista.afgelopenShifts}">
+        <td th:text="${s.datum}"></td>
+        <td th:text="${s.startUur}"></td>
+        <td th:text="${s.eindUur}"></td>
+    </tr>
+</table>
+
+<!-- opleidingen -->
+<h2>Geplande opleidingen</h2>
+<table>
+    <tr>
+        <th>Titel</th>
+    </tr>
+    <tr th:each="o : ${barista.geplandeOpleidingen}">
+        <td th:text="${o.titel}"></td>
+    </tr>
+</table>
+
+<h2>Voltooide opleidingen</h2>
+<table>
+    <tr>
+        <th>Titel</th>
+    </tr>
+    <tr th:each="o : ${barista.voltooideOpleidingen}">
+        <td th:text="${o.titel}"></td>
+    </tr>
+</table>
+
+
+
+<br><br>
+<button type="button" onclick="goBack()">Back</button>
+
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/templates/login.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Inlogpagina</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<h1>Inloggen</h1>
+
+<div id="login-box">
+
+    <h3>Log in met e-mailadres en wachtwoord</h3>
+
+    <div th:if="${param.error}" class="error">Ongeldig e-mailadres of wachtwoord.</div>
+
+    <div th:if="${param.logout}" class="msg">U bent succesvol uitgelogd.</div>
+
+    <form th:action="@{/login}" method="post">
+        <table class="login-table">
+            <tr>
+                <td>E-mail:</td>
+                <td><input type='text' name='email' value='' autofocus></td>
+            </tr>
+            <tr>
+                <td>Wachtwoord:</td>
+                <td><input type='password' name='password' /></td>
+            </tr>
+            <tr>
+                <td colspan='2'><button name="submit" type="submit">Login</button></td>
+            </tr>
+        </table>
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    </form>
+</div>
+
+</body>
+</html>
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/config/InitDataConfig.java">
+package be.hogent.baristajob2026.config;
+
+import be.hogent.baristajob2026.model.*;
+import be.hogent.baristajob2026.repository.BaristaRepository;
+import be.hogent.baristajob2026.repository.OpleidingRepository;
+import be.hogent.baristajob2026.repository.ShiftRepository;
+import be.hogent.baristajob2026.repository.VestigingRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+
+@Component
+@RequiredArgsConstructor
+@Profile("dev")
+public class InitDataConfig implements CommandLineRunner {
+    private final BaristaRepository baristaRepository;
+    private final OpleidingRepository opleidingRepository;
+    private final ShiftRepository shiftRepository;
+    private final VestigingRepository vestigingRepository;
+    private final PasswordEncoder passwordEncoder;
+    @Override
+    public void run(String... args) {
+        // Vestigingen
+        Vestiging v1 = Vestiging.builder()
+                .naam("Gent Centrum")
+                .stad("Gent")
+                .aantalZitplaatsen(50)
+                .baristas(new ArrayList<>())
+                .shifts(new ArrayList<>())
+                .opleidingen(new ArrayList<>())
+                .build();
+        Vestiging v2 = Vestiging.builder()
+                .naam("Antwerpen Zuid")
+                .stad("Antwerpen")
+                .aantalZitplaatsen(40)
+                .baristas(new ArrayList<>())
+                .shifts(new ArrayList<>())
+                .opleidingen(new ArrayList<>())
+                .build();
+        Vestiging v3 = Vestiging.builder()
+                .naam("Brussel Noord")
+                .stad("Brussel")
+                .aantalZitplaatsen(60)
+                .baristas(new ArrayList<>())
+                .shifts(new ArrayList<>())
+                .opleidingen(new ArrayList<>())
+                .build();
+
+        vestigingRepository.save(v1);
+        vestigingRepository.save(v2);
+        vestigingRepository.save(v3);
+
+        // Opleidingen - elk 1 in het verleden (voltooid) en 1 in de toekomst (gepland)
+        Opleiding o1 = Opleiding.builder()
+                .titel("Intro Espresso")
+                .beschrijving("Basistraining voor espresso en machine")
+                .datum(LocalDate.now().minusDays(10)) // voltooid
+                .duurInUur(3)
+                .maxDeelnemers(20)
+                .vestiging(v1)
+                .deelnemers(new HashSet<>())
+                .build();
+
+        Opleiding o2 = Opleiding.builder()
+                .titel("Latte Art Basics")
+                .beschrijving("Melkopschuimen en eenvoudige latte art")
+                .datum(LocalDate.now().plusDays(14)) // gepland
+                .duurInUur(2)
+                .maxDeelnemers(12)
+                .vestiging(v2)
+                .deelnemers(new HashSet<>())
+                .build();
+
+        Opleiding o3 = Opleiding.builder()
+                .titel("Barista Advanced")
+                .beschrijving("Advanced brewing techniques en troubleshooting")
+                .datum(LocalDate.now().minusDays(3)) // voltooid
+                .duurInUur(4)
+                .maxDeelnemers(15)
+                .vestiging(v3)
+                .deelnemers(new HashSet<>())
+                .build();
+
+        Opleiding o4 = Opleiding.builder()
+                .titel("Cocktails Basics")
+                .beschrijving("Introductie tot niet-alcoholische cocktails")
+                .datum(LocalDate.now().plusDays(21)) // gepland
+                .duurInUur(2)
+                .maxDeelnemers(10)
+                .vestiging(v1)
+                .deelnemers(new HashSet<>())
+                .build();
+
+        opleidingRepository.save(o1);
+        opleidingRepository.save(o2);
+        opleidingRepository.save(o3);
+        opleidingRepository.save(o4);
+
+        // Shifts - elk 1 in het verleden (afgelopen) en 1 in de toekomst (toekomstig)
+        Shift s1 = Shift.builder()
+                .datum(LocalDate.now().plusDays(1)) // toekomstig
+                .startUur(LocalTime.of(9, 0))
+                .eindUur(LocalTime.of(13, 0))
+                .rol(ShiftRol.BARISTA)
+                .maxBaristas(3)
+                .vestiging(v1)
+                .ingeschrevenBaristas(new HashSet<>())
+                .build();
+
+        Shift s2 = Shift.builder()
+                .datum(LocalDate.now().minusDays(5)) // afgelopen
+                .startUur(LocalTime.of(13, 0))
+                .eindUur(LocalTime.of(17, 0))
+                .rol(ShiftRol.KASSIER)
+                .maxBaristas(2)
+                .vestiging(v2)
+                .ingeschrevenBaristas(new HashSet<>())
+                .build();
+
+        Shift s3 = Shift.builder()
+                .datum(LocalDate.now().plusDays(3)) // toekomstig
+                .startUur(LocalTime.of(17, 0))
+                .eindUur(LocalTime.of(21, 0))
+                .rol(ShiftRol.BARISTA)
+                .maxBaristas(4)
+                .vestiging(v3)
+                .ingeschrevenBaristas(new HashSet<>())
+                .build();
+
+        Shift s4 = Shift.builder()
+                .datum(LocalDate.now().minusDays(2)) // afgelopen
+                .startUur(LocalTime.of(9, 0))
+                .eindUur(LocalTime.of(12, 0))
+                .rol(ShiftRol.KASSIER)
+                .maxBaristas(3)
+                .vestiging(v1)
+                .ingeschrevenBaristas(new HashSet<>())
+                .build();
+
+        Shift s5 = Shift.builder()
+                .datum(LocalDate.now().plusDays(2)) // toekomstig, nog niet volzet, niemand ingeschreven
+                .startUur(LocalTime.of(10, 0))
+                .eindUur(LocalTime.of(14, 0))
+                .rol(ShiftRol.BARISTA)
+                .maxBaristas(2)
+                .vestiging(v1)
+                .ingeschrevenBaristas(new HashSet<>())
+                .build();
+
+        shiftRepository.save(s1);
+        shiftRepository.save(s2);
+        shiftRepository.save(s3);
+        shiftRepository.save(s4);
+        shiftRepository.save(s5);
+        // Baristas (3) - elk gekoppeld aan 1 afgelopen + 1 toekomstige shift, en 1 voltooide + 1 geplande opleiding
+        Barista b1 = Barista.builder()
+                .studentenkaartNummer("20261001")
+                .voornaam("Jan")
+                .achternaam("Janssens")
+                .email("jan.janssens@hogent.be")
+                .password(passwordEncoder.encode("12345678"))
+                .geboortedatum(LocalDate.of(1999, 4, 12))
+                .actief(true)
+                .administratiefGeblokkeerd(false)
+                .vestiging(v1)
+                .shiftRol(ShiftRol.BARISTA)
+                .rol(Rol.ADMIN) // security role - admin
+                .shifts(new HashSet<>(Arrays.asList(s1, s4)))
+                .opleidings(new HashSet<>(Arrays.asList(o1, o4)))
+                .build();
+
+        Barista b2 = Barista.builder()
+                .studentenkaartNummer("20261002")
+                .voornaam("Lies")
+                .achternaam("Peeters")
+                .email("lies.peeters@hogent.be")
+                .password(passwordEncoder.encode("12345678"))
+                .geboortedatum(LocalDate.of(2000, 2, 20))
+                .actief(true)
+                .administratiefGeblokkeerd(false)
+                .vestiging(v2)
+                .rol(Rol.BARISTA) // gewoone user
+                .shiftRol(ShiftRol.KASSIER)
+                .shifts(new HashSet<>(Arrays.asList(s2, s3)))
+                .opleidings(new HashSet<>(Arrays.asList(o2, o3)))
+                .build();
+
+        Barista b3 = Barista.builder()
+                .studentenkaartNummer("20261003")
+                .voornaam("Tom")
+                .achternaam("De Vries")
+                .email("tom.devries@hogent.be")
+                .password(passwordEncoder.encode("12345678"))
+                .geboortedatum(LocalDate.of(1998, 11, 5))
+                .actief(true)
+                .administratiefGeblokkeerd(false)
+                .vestiging(v3)
+                .shiftRol(ShiftRol.BARISTA)
+                .rol(Rol.BARISTA) // gewoone user
+                .shifts(new HashSet<>(Arrays.asList(s3, s4)))
+                .opleidings(new HashSet<>(Arrays.asList(o3, o4)))
+                .build();
+
+        baristaRepository.save(b1);
+        baristaRepository.save(b2);
+        baristaRepository.save(b3);
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/controller/OverviewController.java">
+package be.hogent.baristajob2026.controller;
+
+import be.hogent.baristajob2026.dto.request.FilterBaristaDTO;
+import be.hogent.baristajob2026.service.BaristaService;
+import be.hogent.baristajob2026.service.OpleidingService;
+import be.hogent.baristajob2026.service.VestigingService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/overview")
+public class OverviewController {
+    private final VestigingService vestigingService;
+    private final BaristaService baristaService;
+    private final OpleidingService opleidingService;
+
+    // toont het initiele scherm (/overview) met alle data en ingeladen dropdown opties
+    // @ModelAttribute("filterBaristaDTO") FilterBaristaDTO filterBaristaDTO zorgt ervoor dat
+    // er een lege FilterBaristaDTO wordt aangemaakt en toegevoegd aan het model, zodat de form in de view correct kan worden weergegeven
+    @GetMapping
+    public String showOverview(@ModelAttribute("filterBaristaDTO") FilterBaristaDTO filterBaristaDTO, Model model) {
+        addSharedAttributes(model);
+        model.addAttribute("baristas", baristaService.findAllOverview());
+        return "overview";
+    }
+
+    @PostMapping
+    public String processOverviewFilter(FilterBaristaDTO filterBaristaDTO, Model model) {
+        addSharedAttributes(model);
+        // gefilterde lijst met baristas op basis van de filter criteria
+        model.addAttribute("baristas", baristaService.findFilteredBaristas(filterBaristaDTO));
+        return "overview";
+    }
+
+    // gemeenschappelijke model-attributen voor GET en POST
+    // voordeel is dat als er een vierde attribute bijkomt, we die maar op 1 plaats moeten toevoegen ipv in beide methoden
+    private void addSharedAttributes(Model model) {
+        model.addAttribute("vestigingen", vestigingService.findAll());
+        model.addAttribute("stedenList", vestigingService.getAllSteden());
+        model.addAttribute("opleidingenList", opleidingService.findAll());
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/repository/BaristaRepository.java">
+package be.hogent.baristajob2026.repository;
+
+import be.hogent.baristajob2026.model.Barista;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface BaristaRepository extends JpaRepository<Barista, Long> {
+
+    // om de inherited loadByUsername() van UserDetailsService te kunnen implementeren
+    // volgens de opgave werken we wel met e-mail en geen username
+    Optional<Barista> findByEmail (String email);
+
+    // voor overzicht scherm "aantal actieve baristas"
+    // wordt gebruikt in de service van Vestiging
+    long countByVestigingIdAndActiefTrue(Long vestigingId);
+
+    // voor form barista toevoegen/wijzigen - de validate van unique email en studentenkaartnummer
+    // wordt gebruikt in BaristaUniekValidator
+    Optional<Barista> findByStudentenkaartNummer(String studentenkaartNummer);
+
+    // voor BaristaStadLimietValidator - aantal actieve baristas tellen per stad (over alle vestigingen in die stad)
+    // dit is een join, Barosta heeft een vestiging veld, en een Vestiging object heeft een stad veld
+    // zonder de underscore zou Spring zoeken voor een veld "vestigingStad" in Barista en falen
+    long countByVestiging_StadAndActiefTrue(String stad);
+
+    // zelfde, maar exclusief de barista die je zelf aan het bewerken bent
+    // (anders zou een reeds-actieve barista in die stad zichzelf altijd blokkeren bij bewerken)
+    long countByVestiging_StadAndActiefTrueAndIdNot(String stad, Long id);
+
+    // voor REST: GET /api/baristas?stad=
+    List<Barista> findByVestiging_Stad(String stad);
+}
+</file>
+
+<file path="src/main/resources/templates/opleiding-overview.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Opleidingen</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1>Opleidingen</h1>
+<div class="action-bar">
+<a class="btn" sec:authorize="hasRole('ADMIN')" th:href="@{/opleiding/nieuw}">Opleiding toevoegen</a>
+</div>
+<p th:if="${foutmelding}" class="error" th:text="${foutmelding}"></p>
+
+<!-- FILTER FORM VOOR OPLEIDINGEN -->
+<form th:action="@{/opleiding}" th:object="${filterOpleidingDTO}" method="post" class="filter-form">
+
+    Titel:
+    <input type="text" th:field="*{titelSelected}" id="titelSelected"/>
+
+    Kies vestiging:
+    <select th:field="*{vestigingSelected}" id="vestigingSelected">
+        <option value="">Alle vestigingen</option>
+        <option th:each="v : ${vestigingen}"
+                th:value="${v.id}"
+                th:text="${v.naam}">
+        </option>
+    </select>
+
+    Beschikbaarheid:
+    <select th:field="*{beschikbaarheidSelected}" id="beschikbaarheidSelected">
+        <option value="">Alles</option>
+        <option value="beschikbaar">Beschikbaar</option>
+        <option value="volgeboekt">Volgeboekt</option>
+    </select>
+
+    <button type="submit">Filter</button>
+</form>
+
+<!-- OPLEIDINGEN OVERVIEW -->
+<table th:with="datePattern=#{date.format}">
+    <tr>
+        <th>Titel</th>
+        <th>Beschrijving</th>
+        <th>Datum</th>
+        <th>Duur (u)</th>
+        <th>Vestiging</th>
+        <th>Deelnemers</th>
+        <th sec:authorize="hasRole('ADMIN')">Deelnemerslijst</th>
+        <th sec:authorize="hasRole('ADMIN')"></th>
+        <th sec:authorize="hasRole('BARISTA')"></th>
+    </tr>
+    <tr th:each="o : ${opleidingen}">
+        <td th:text="${o.titel}"></td>
+        <td th:text="${o.beschrijving}"></td>
+        <td th:text="${#temporals.format(o.datum, datePattern)}"></td>
+        <td th:text="${o.duurInUur}"></td>
+        <td th:text="${o.vestigingNaam}"></td>
+        <td th:text="${o.aantalIngeschreven} + ' / ' + ${o.maxDeelnemers}"></td>
+
+        <!-- enkel admins zien wie ingeschreven is (geen aparte coördinator-rol in deze app) -->
+        <td sec:authorize="hasRole('ADMIN')">
+            <span th:each="naam : ${o.deelnemerNamen}" th:text="${naam} + ', '"></span>
+        </td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <a class="btn" th:href="|/opleiding/${o.id}/bewerken|">Bewerken</a>
+        </td>
+        <!-- inschrijfknop enkel voor ingelogde baristas -->
+        <td sec:authorize="hasRole('BARISTA')">
+            <span th:if="${o.alReedsIngeschreven}">Reeds ingeschreven</span>
+            <span th:if="${!o.alReedsIngeschreven and o.aantalIngeschreven >= o.maxDeelnemers}">Volgeboekt</span>
+            <form th:if="${!o.alReedsIngeschreven and o.aantalIngeschreven lt o.maxDeelnemers}"
+                  th:action="|/opleiding/${o.id}/inschrijven|" method="post">
+                <button type="submit">Inschrijven</button>
+            </form>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/templates/shift-overview.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Shifts - ' + ${barista.voornaam}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script type="text/javascript">
+        function goBack() { window.history.back(); }
+    </script>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="'Shifts van ' + ${barista.voornaam}"></h1>
+
+<p th:if="${foutmelding}" class="error" th:text="${foutmelding}"></p>
+
+<h2>Mijn shifts</h2>
+<table th:with="datePattern=#{date.format}, timePattern=#{time.format}">
+    <tr>
+        <th>Datum</th><th>Startuur</th><th>Einduur</th><th>Rol</th><th>Vestiging</th>
+    </tr>
+    <tr th:each="s : ${eigenShifts}">
+        <td th:text="${#temporals.format(s.datum, datePattern)}"></td>
+        <td th:text="${#temporals.format(s.startUur, timePattern)}"></td>
+        <td th:text="${#temporals.format(s.eindUur, timePattern)}"></td>
+        <td th:text="${s.rol}"></td>
+        <td th:text="${s.vestigingNaam}"></td>
+    </tr>
+</table>
+
+<h2>Beschikbare shifts</h2>
+<table>
+    <tr>
+        <th>Datum</th><th>Startuur</th><th>Einduur</th><th>Rol</th><th>Plaatsen</th><th></th>
+    </tr>
+    <tr th:each="s : ${beschikbareShifts}">
+        <td th:text="${s.datum}"></td>
+        <td th:text="${s.startUur}"></td>
+        <td th:text="${s.eindUur}"></td>
+        <td th:text="${s.rol}"></td>
+        <td th:text="${s.aantalIngeschreven} + ' / ' + ${s.maxBaristas}"></td>
+        <td>
+            <form th:action="|/shift/${s.id}/inschrijven|" method="post">
+                <button type="submit">Inschrijven</button>
+            </form>
+        </td>
+    </tr>
+</table>
+
+<br><br>
+<button type="button" onclick="goBack()">Back</button>
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/application.properties">
+spring.application.name=BaristaJob2026
+## MySQL connectie
+spring.datasource.url=jdbc:mysql://localhost:3306/baristajob?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+# hibernate instelling
+spring.jpa.hibernate.ddl-auto=create-drop
+# voor seeding actief/inactief maken
+spring.profiles.active=dev
+
+# properties locatie
+spring.messages.basename=i18n/messages
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/advice/GlobalExceptionAdvice.java">
+package be.hogent.baristajob2026.advice;
+
+import be.hogent.baristajob2026.controller.*;
+import be.hogent.baristajob2026.exception.BaristaNotFoundException;
+import be.hogent.baristajob2026.exception.OpleidingNotFoundException;
+import be.hogent.baristajob2026.exception.ShiftNotFoundException;
+import be.hogent.baristajob2026.exception.VestigingNotFoundException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+// enkel voor de MVC (@Controller) klassen; ApiController heeft zijn eigen ApiExceptionAdvice
+// (JSON i.p.v. redirect/view), dus we sluiten die hier bewust uit om overlap te vermijden
+@ControllerAdvice(assignableTypes = {
+        BaristaController.class,
+        VestigingController.class,
+        OpleidingController.class,
+        ShiftController.class,
+        OverviewController.class
+})
+public class GlobalExceptionAdvice {
+
+    @ExceptionHandler(BaristaNotFoundException.class)
+    public String handleBaristaNotFound() {
+        return "redirect:/overview";
+    }
+
+    @ExceptionHandler(VestigingNotFoundException.class)
+    public String handleVestigingNotFound() {
+        return "redirect:/overview";
+    }
+
+    @ExceptionHandler(ShiftNotFoundException.class)
+    public String handleShiftNotFound() {
+        return "redirect:/overview";
+    }
+
+    @ExceptionHandler(OpleidingNotFoundException.class)
+    public String handleOpleidingNotFound() {
+        return "redirect:/overview";
+    }
+
+    // onjuiste URL's opvangen: bv. /vestiging/abc waar een Long verwacht wordt
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public String handleInvalidIdFormat() {
+        return "error/404";
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/controller/BaristaController.java">
+package be.hogent.baristajob2026.controller;
+
+import be.hogent.baristajob2026.dto.request.BaristaInputDTO;
+import be.hogent.baristajob2026.dto.response.BaristaDetailDTO;
+import be.hogent.baristajob2026.service.BaristaService;
+import be.hogent.baristajob2026.service.OpleidingService;
+import be.hogent.baristajob2026.service.ShiftService;
+import be.hogent.baristajob2026.service.VestigingService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/barista")
+public class BaristaController {
+    private final BaristaService baristaService;
+    private final VestigingService vestigingService; // nodig voor barista form bewerkingen
+    private final ShiftService shiftService; // nodig voor shifts beheren/inschrijven
+    private final OpleidingService opleidingService; // nodig voor opleiding inschrijven
+
+    // detailpagina - zichtbaar voor admins en de barista zelf
+    // controller haalt enkel de nodige gegevens uit de Authentication (rol, email)
+    // en geeft die door aan de service; de service beslist of toegang toegestaan is
+    @GetMapping("/{id}")
+    public String showDetail(@PathVariable Long id, Model model, Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        BaristaDetailDTO barista = baristaService.findDetailById(id, authentication.getName(), isAdmin);
+
+        model.addAttribute("barista", barista);
+        // om in de view de "shifts beheren" knop enkel te tonen aan de betreffende barista
+        model.addAttribute("isEigenProfiel", authentication.getName().equals(barista.email()));
+
+        return "barista-detail";
+    }
+
+
+    // toont het lege formulier voor een nieuwe barista (Admin)
+    // @ModelAttribute("baristaInputDTO") BaristaInputDTO zorgt ervoor dat er een lege
+    // BaristaInputDTO wordt aangemaakt en toegevoegd aan het model (cfr. FilterBaristaDTO
+    // in OverviewController), zodat de form in de view correct kan worden weergegeven
+    @GetMapping("/nieuw")
+    public String showNieuwForm(@ModelAttribute("baristaInputDTO") BaristaInputDTO baristaInputDTO, Model model) {
+        addFormAttributes(model);
+        return "barista-form";
+    }
+
+    // via de Valid annotation wordt de validatie in de DTO klasse toegepast
+    // (jakarta annotaties + BaristaUniekValidator), alles dat niet voldoet aan
+    // de validatie gaat naar de bindingresult
+    // je moet altijd @Valid -> bindingresult volgorde respecteren
+    @PostMapping("/nieuw")
+    public String processNieuwForm(@Valid BaristaInputDTO baristaInputDTO,
+                                   BindingResult result, Model model) {
+
+        // als er fouten zijn keer je terug naar hetzelfde scherm
+        if (result.hasErrors()) {
+            addFormAttributes(model);
+            return "barista-form";
+        }
+
+        // geen fouten, mag doorgaan
+        baristaService.createBarista(baristaInputDTO);
+        return "redirect:/overview";
+    }
+
+    // toont het formulier voor een bestaande barista, vooraf ingevuld (Admin)
+    @GetMapping("/{id}/bewerken")
+    public String showBewerkenForm(@PathVariable Long id, Model model) {
+        model.addAttribute("baristaInputDTO", baristaService.findInputById(id));
+        addFormAttributes(model);
+        return "barista-form";
+    }
+
+
+    @PostMapping("/{id}/bewerken")
+    public String processBewerkenForm(@PathVariable Long id,
+                                      @Valid BaristaInputDTO baristaInputDTO,
+                                      BindingResult result, Model model) {
+        // als er fouten zijn keer je terug naar hetzelfde scherm
+        if (result.hasErrors()) {
+            addFormAttributes(model);
+            return "barista-form";
+        }
+
+        // geen fouten, mag doorgaan
+        baristaService.updateBarista(id, baristaInputDTO);
+        return "redirect:/barista/" + id;
+    }
+
+    // toont de shiftpagina van een barista (beschikbare shifts + eigen shifts)
+    // findDetailById regelt de autorisatie (enkel admin of de barista zelf), dus we hergebruiken die
+    @GetMapping("/{id}/shifts")
+    public String showShifts(@PathVariable Long id, Model model, Authentication authentication) {
+        BaristaDetailDTO barista = baristaService.findDetailById(id, authentication.getName(), isAdmin(authentication));
+
+        model.addAttribute("barista", barista);
+        model.addAttribute("beschikbareShifts", shiftService.findBeschikbaarVoorBarista(id));
+        model.addAttribute("eigenShifts", shiftService.findEigenShiften(id));
+        return "shift-overview";
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    // navbar "Mijn shifts" knop - herleidt naar de shiftpagina van de ingelogde gebruiker zelf
+    @GetMapping("/mijn-shifts")
+    public String redirectNaarEigenShifts(Authentication authentication) {
+        Long id = baristaService.findIdByEmail(authentication.getName());
+        return "redirect:/barista/" + id + "/shifts";
+    }
+
+    @GetMapping("/mijn-profiel")
+    public String redirectNaarEigenProfiel(Authentication authentication) {
+        Long id = baristaService.findIdByEmail(authentication.getName());
+        return "redirect:/barista/" + id;
+    }
+
+    // gemeenschappelijk model-attribuut voor het formulier (GET en POST bij fouten)
+    // cfr. addSharedAttributes() in OverviewController
+    private void addFormAttributes(Model model) {
+        model.addAttribute("vestigingen", vestigingService.findAll());
+    }
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/service/OpleidingService.java">
+package be.hogent.baristajob2026.service;
+
+import be.hogent.baristajob2026.dto.request.FilterOpleidingDTO;
+import be.hogent.baristajob2026.dto.request.OpleidingInputDTO;
+import be.hogent.baristajob2026.dto.response.OpleidingDetailDTO;
+import be.hogent.baristajob2026.dto.response.OpleidingOverviewDTO;
+import be.hogent.baristajob2026.exception.BaristaNotFoundException;
+import be.hogent.baristajob2026.exception.OpleidingNotFoundException;
+import be.hogent.baristajob2026.exception.VestigingNotFoundException;
+import be.hogent.baristajob2026.model.Barista;
+import be.hogent.baristajob2026.model.Opleiding;
+import be.hogent.baristajob2026.model.Vestiging;
+import be.hogent.baristajob2026.repository.BaristaRepository;
+import be.hogent.baristajob2026.repository.OpleidingRepository;
+import be.hogent.baristajob2026.repository.VestigingRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class OpleidingService {
+
+    // "binnen de actieve periode" is zelf te kiezen (cfr. opgave) -> we tellen enkel
+    // nog-niet-plaatsgevonden (geplande) opleidingen mee, analoog aan de geplande/voltooide-
+    // opsplitsing die al bestaat in BaristaService.toDetailDTO
+    private static final int MAX_OPLEIDINGEN_ACTIEF = 3;
+
+
+    private final OpleidingRepository repository;
+    private final BaristaRepository baristaRepository; // nodig voor inschrijven
+    private final VestigingRepository vestigingRepository; // nodig voor opleiding toevoegen/wijzigen
+
+    // convert to DTO methoden
+
+    // voor barista/vestiging detailpaginas
+    public OpleidingOverviewDTO toDTO(Opleiding o) {
+        return new OpleidingOverviewDTO(
+                o.getId(),
+                o.getTitel()
+        );
+    }
+
+    // voor het opleidingsscherm
+    // currentBaristaId is null voor anonieme bezoekers en admins -> alReedsIngeschreven blijft dan false
+    private OpleidingDetailDTO toDetailDTO(Opleiding o, Long currentBaristaId) {
+        boolean alReedsIngeschreven = currentBaristaId != null
+                && o.getDeelnemers().stream().anyMatch(b -> b.getId().equals(currentBaristaId));
+
+        return new OpleidingDetailDTO(
+                o.getId(),
+                o.getTitel(),
+                o.getBeschrijving(),
+                o.getDatum(),
+                o.getDuurInUur(),
+                o.getMaxDeelnemers(),
+                o.getDeelnemers().size(),
+                o.getVestiging() != null ? o.getVestiging().getId() : null,
+                o.getVestiging() != null ? o.getVestiging().getNaam() : null,
+                alReedsIngeschreven,
+                o.getDeelnemers().stream()
+                        .map(b -> b.getVoornaam() + " " + b.getAchternaam())
+                        .toList()
+        );
+    }
+
+    // voor opleiding toevoegen/wijzigen form
+    private OpleidingInputDTO toInputDTO(Opleiding o) {
+        return new OpleidingInputDTO(
+                o.getId(),
+                o.getTitel(),
+                o.getBeschrijving(),
+                o.getDatum(),
+                o.getDuurInUur(),
+                o.getMaxDeelnemers(),
+                o.getVestiging() != null ? o.getVestiging().getId() : null
+        );
+    }
+
+
+    // getX methoden
+    public List<OpleidingOverviewDTO> findAll() {
+        return repository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    // voor opleidingsscherm - gefilterde lijst van alle opleidingen
+    // currentBaristaId komt van de controller (null bij anonieme bezoekers/admins)
+    public List<OpleidingDetailDTO> findFilteredOpleidingen(FilterOpleidingDTO filter, Long currentBaristaId) {
+        return repository.findAll().stream()
+                // filter op vestiging
+                .filter(o -> filter.vestigingSelected() == null
+                        || (o.getVestiging() != null && filter.vestigingSelected().equals(o.getVestiging().getId())))
+                // filter op titel (contains, case-insensitive)
+                .filter(o -> filter.titelSelected() == null || filter.titelSelected().isBlank()
+                        || o.getTitel().toLowerCase().contains(filter.titelSelected().toLowerCase()))
+                // filter op beschikbaarheid
+                .filter(o -> {
+                    if (filter.beschikbaarheidSelected() == null || filter.beschikbaarheidSelected().isBlank()) {
+                        return true; // geen filter
+                    }
+                    boolean beschikbaar = o.getDeelnemers().size() < o.getMaxDeelnemers();
+                    return switch (filter.beschikbaarheidSelected()) {
+                        case "beschikbaar" -> beschikbaar;
+                        case "volgeboekt" -> !beschikbaar;
+                        default -> true;
+                    };
+                })
+                .sorted(Comparator.comparing(Opleiding::getDatum))
+                .map(o -> toDetailDTO(o, currentBaristaId))
+                .toList();
+    }
+
+    // opleiding inschrijven met businessregels
+    public String inschrijven(Long opleidingId, Long baristaId) {
+        Opleiding opleiding = repository.findById(opleidingId)
+                .orElseThrow(() -> new OpleidingNotFoundException(opleidingId));
+        Barista barista = baristaRepository.findById(baristaId)
+                .orElseThrow(() -> new BaristaNotFoundException(baristaId));
+
+        // additionele businessregel; geblokkeerde baristas mogen zich niet inschrijven
+        if (barista.isAdministratiefGeblokkeerd()) {
+            return "Je hebt nog openstaande administratieve problemen en kan je niet inschrijven voor opleidingen.";
+        }
+
+        if (opleiding.getDeelnemers().contains(barista)) {
+            return "Je bent al ingeschreven voor deze opleiding.";
+        }
+
+        // opleiding mag niet overboeken: deelnemers <= maxDeelnemers
+        if (opleiding.getDeelnemers().size() >= opleiding.getMaxDeelnemers()) {
+            return "Deze opleiding is volgeboekt.";
+        }
+
+        // maximaal 3 opleidingen binnen de actieve (nog niet plaatsgevonden) periode
+        LocalDate vandaag = LocalDate.now();
+        long geplandeOpleidingen = barista.getOpleidings().stream()
+                .filter(o -> !o.getDatum().isBefore(vandaag))
+                .count();
+        if (geplandeOpleidingen + 1 > MAX_OPLEIDINGEN_ACTIEF) {
+            return "Je kan maximaal %d opleidingen tegelijk ingepland hebben.".formatted(MAX_OPLEIDINGEN_ACTIEF);
+        }
+
+        // Barista is de owning side van de relatie, dus we mogen hier gewoon toevoegen en saven
+        barista.getOpleidings().add(opleiding);
+        baristaRepository.save(barista);
+        return null;
+    }
+
+    // voor GET /opleiding/{id}/bewerken
+    public OpleidingInputDTO findInputById(Long id) {
+        Opleiding o = repository.findById(id)
+                .orElseThrow(() -> new OpleidingNotFoundException(id));
+        return toInputDTO(o);
+    }
+
+    // voor POST /opleiding/nieuw
+    public void createOpleiding(OpleidingInputDTO dto) {
+        Vestiging vestiging = vestigingRepository.findById(dto.vestigingId())
+                .orElseThrow(() -> new VestigingNotFoundException(dto.vestigingId()));
+
+        Opleiding opleiding = Opleiding.builder()
+                .titel(dto.titel())
+                .beschrijving(dto.beschrijving())
+                .datum(dto.datum())
+                .duurInUur(dto.duurInUur())
+                .maxDeelnemers(dto.maxDeelnemers())
+                .vestiging(vestiging)
+                .deelnemers(new HashSet<>())
+                .build();
+
+        repository.save(opleiding);
+    }
+
+    // voor POST /opleiding/{id}/bewerken
+    public void updateOpleiding(Long id, OpleidingInputDTO dto) {
+        Opleiding opleiding = repository.findById(id)
+                .orElseThrow(() -> new OpleidingNotFoundException(id));
+        Vestiging vestiging = vestigingRepository.findById(dto.vestigingId())
+                .orElseThrow(() -> new VestigingNotFoundException(dto.vestigingId()));
+
+        opleiding.setTitel(dto.titel());
+        opleiding.setBeschrijving(dto.beschrijving());
+        opleiding.setDatum(dto.datum());
+        opleiding.setDuurInUur(dto.duurInUur());
+        opleiding.setMaxDeelnemers(dto.maxDeelnemers());
+        opleiding.setVestiging(vestiging);
+
+        repository.save(opleiding);
+    }
+
+    // voor REST: opleidingen per vestiging
+    public List<OpleidingOverviewDTO> findByVestigingId(Long vestigingId) {
+        if (!vestigingRepository.existsById(vestigingId)) {
+            throw new VestigingNotFoundException(vestigingId);
+        }
+        return repository.findByVestigingId(vestigingId).stream()
+                .map(this::toDTO)
+                .toList();
+    }
+}
+</file>
+
+<file path="src/main/resources/i18n/messages.properties">
+# Default fallback als een specifieke language bestand niet beschikbaar is
+# (nl is de effectieve standaardtaal via LanguageConfig, dus deze file blijft leeg)
+</file>
+
+<file path="src/main/resources/templates/overview.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{overview.title}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<!-- navbar fragment-->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<h1 th:text="#{overview.title}"></h1>
+
+<!-- VESTIGINGEN OVERVIEW -->
+<h2 th:text="#{overview.vestigingen.title}"></h2>
+
+<table>
+    <tr>
+        <th th:text="#{common.naam}"></th>
+        <th th:text="#{common.stad}"></th>
+        <th th:text="#{overview.vestigingen.zitplaatsen}"></th>
+        <th th:text="#{overview.vestigingen.actievebaristas}"></th>
+    </tr>
+
+    <tr th:each="v : ${vestigingen}">
+        <td>
+            <a th:href="|/vestiging/${v.id}|"
+               th:text="${v.naam}">
+            </a>
+        </td>
+
+        <td th:text="${v.stad}"></td>
+        <td th:text="${v.aantalZitplaatsen}"></td>
+        <td th:text="${v.aantalActieveBaristas}"></td>
+    </tr>
+</table>
+
+<hr>
+
+<!-- FILTER FORM VOOR BARISTAS -->
+<!-- th:action = URL waarnaar het formulier wordt verzonden
+     th:object = het object (DTO) waaraan de formvelden gekoppeld zijn,
+      dit is gewoon de parameter van de DTO in jouw controller -->
+<h2 th:text="#{overview.filter.title}"></h2>
+
+<form th:action="@{/overview}" th:object="${filterBaristaDTO}" method="post" class="filter-form">
+    <!-- filter op stad -->
+    <!-- for lus structuur, de option section is de lus zelf (th:each) -->
+    <label th:text="#{overview.filter.stad.label}"></label>
+    <select th:field="*{stadSelected}" id="stadSelected">  <!-- in th:field zet je de parameter van de object -->
+        <!-- option voor "geen filter" -->
+        <option value="" th:text="#{overview.filter.stad.alle}"></option>
+        <!-- th:each, voor elke stad, de parameter stad kies je zelf -->
+        <!-- na de parameter zeg je uit welke list dat moet komen -->
+        <option th:each="stad : ${stedenList}"
+                th:value="${stad.naam}"
+                th:text="${stad.naam}">
+        </option>
+    </select>
+
+
+    <!-- filter op actief/inactief -->
+    <label th:text="#{overview.filter.status.label}"></label>
+    <select th:field="*{actiefSelected}" id="actiefSelected">
+        <option value="" th:text="#{overview.filter.status.alle}"></option>
+        <option value="true" th:text="#{overview.filter.status.actief}"></option>
+        <option value="false" th:text="#{overview.filter.status.inactief}"></option>
+    </select>
+
+
+
+    <!-- filter op opleiding -->
+    <label th:text="#{overview.filter.opleiding.label}"></label>
+    <select th:field="*{opleidingSelected}" id="opleidingSelected">
+        <!-- option voor "geen filter" -->
+        <option value="" th:text="#{overview.filter.opleiding.alle}"></option>
+        <!-- th:each om door opleidingen te loopen -->
+        <!-- th:value gebruikt het ID (voor POST) en th:text toont de titel -->
+        <option th:each="opleiding : ${opleidingenList}"
+                th:value="${opleiding.id}"
+                th:text="${opleiding.titel}">
+        </option>
+    </select>
+
+    <!-- filter op sortering -->
+    <!-- sorteeropties: naam, aantal shifts, geboortedatum -->
+    <label th:text="#{overview.filter.sort.label}"></label>
+    <select th:field="*{sortSelected}" id="sortSelected">
+        <option value="" th:text="#{overview.filter.sort.geen}"></option>
+        <option value="naam" th:text="#{overview.filter.sort.naam}"></option>
+        <option value="shifts" th:text="#{overview.filter.sort.shifts}"></option>
+        <option value="geboortedatum" th:text="#{overview.filter.sort.geboortedatum}"></option>
+    </select>
+
+    <button type="submit" th:text="#{overview.filter.submit}"></button>
+</form>
+
+<!-- BARISTA OVERVIEW -->
+<!--beperkte weergave voor anonieme bezoekers: voornaam, stad van vestiging-->
+<h2 th:text="#{overview.baristas.title}"></h2>
+<table th:with="datePattern=#{date.format}">
+    <tr>
+        <th th:text="#{overview.baristas.voornaam}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.achternaam}"></th>
+        <th th:text="#{common.stad}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{common.actief}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.geboortedatum}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.aantalshifts}"></th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="#{overview.baristas.opleiding}"></th>
+    </tr>
+    <tr th:each="b : ${baristas}">
+        <td>
+            <a sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:href="|/barista/${b.id}|" th:text="${b.voornaam}"></a>
+            <span sec:authorize="!hasAnyRole('ADMIN','BARISTA')" th:text="${b.voornaam}"></span>
+        </td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.achternaam}"></td>
+        <td th:text="${b.stad}"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.actief} ? #{common.ja} : #{common.nee}"></td>
+        <!-- datumformaat komt uit de resource bundle (date.format), niet hardcoded -->
+        <td
+                sec:authorize="hasAnyRole('ADMIN','BARISTA')"
+                th:text="${#temporals.format(b.geboortedatum, datePattern)}"></td>
+        </td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.aantalShifts}"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')">
+            <!-- th:each om door de opleidingen van deze barista te loopen -->
+            <!-- th:text toont de titel van elke opleiding -->
+            <span th:each="opleiding : ${b.opleidingen}"
+                  th:text="${opleiding.titel} + ' '">
+    </span>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
+</file>
+
+<file path="src/main/resources/templates/vestiging-detail.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${vestiging.naam}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script type="text/javascript">
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${vestiging.naam}"></h1>
+<div class="action-bar">
+<a class="btn" sec:authorize="hasRole('ADMIN')" th:href="|/vestiging/${vestiging.id}/bewerken|">Vestiging bewerken</a>
+</div>
+<!-- basisgegevens -->
+<table>
+    <tr>
+        <th>Stad</th>
+        <td th:text="${vestiging.stad}"></td>
+    </tr>
+    <tr>
+        <th>Aantal zitplaatsen</th>
+        <td th:text="${vestiging.aantalZitplaatsen}"></td>
+    </tr>
+</table>
+
+<!-- baristas -->
+<!-- zelfde RBAC-principe als in overview.html: anonieme bezoekers zien enkel voornaam,
+     ingelogde admins/baristas zien de volledige rij -->
+<h2>Barista's</h2>
+<table>
+    <tr>
+        <th>Voornaam</th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')">Achternaam</th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')">Actief</th>
+        <th sec:authorize="hasAnyRole('ADMIN','BARISTA')">Aantal shifts</th>
+    </tr>
+    <tr th:each="b : ${vestiging.baristas}">
+        <td>
+            <a sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:href="|/barista/${b.id}|" th:text="${b.voornaam}"></a>
+            <span sec:authorize="!hasAnyRole('ADMIN','BARISTA')" th:text="${b.voornaam}"></span>
+        </td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.achternaam}"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.actief} ? 'Ja' : 'Nee'"></td>
+        <td sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:text="${b.aantalShifts}"></td>
+    </tr>
+</table>
+
+<!-- shifts -->
+<h2>Shifts</h2>
+<table  th:with="datePattern=#{date.format}, timePattern=#{time.format}">
+    <tr>
+        <th>Datum</th><th>Startuur</th><th>Einduur</th>
+        <th sec:authorize="hasRole('ADMIN')"></th>
+    </tr>
+    <tr th:each="s : ${vestiging.shifts}">
+        <td th:text="${#temporals.format(s.datum, datePattern)}"></td>
+        <td th:text="${#temporals.format(s.startUur, timePattern)}"></td>
+        <td th:text="${#temporals.format(s.eindUur, timePattern)}"></td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <a class="btn" th:href="|/shift/${s.id}/bewerken|">Bewerken</a>
+            <form th:action="|/shift/${s.id}/verwijderen|" method="post" style="display:inline;">
+                <button type="submit">Verwijderen</button>
+            </form>
+        </td>
+    </tr>
+</table>
+
+
+<!-- opleidingen -->
+<!-- openbare opleidingen, zichtbaar voor iedereen -->
+<h2>Opleidingen</h2>
+<table>
+    <tr>
+        <th>Titel</th>
+    </tr>
+    <tr th:each="o : ${vestiging.opleidingen}">
+        <td th:text="${o.titel}"></td>
+    </tr>
+</table>
+
+<br><br>
+<button type="button" onclick="goBack()">Back</button>
+</body>
+</html>
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/service/VestigingService.java">
+package be.hogent.baristajob2026.service;
+
+
+import be.hogent.baristajob2026.dto.request.VestigingInputDTO;
+import be.hogent.baristajob2026.dto.response.*;
+import be.hogent.baristajob2026.exception.VestigingNotFoundException;
+import be.hogent.baristajob2026.model.Shift;
+import be.hogent.baristajob2026.model.Vestiging;
+import be.hogent.baristajob2026.repository.BaristaRepository;
+import be.hogent.baristajob2026.repository.VestigingRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class VestigingService {
+    private final VestigingRepository vestigingRepository;
+    // we injecteren ook be baristaRepository omdat we daar de query hebben om
+    // het aantal actieve baristas te tellen per vestiging
+    private final BaristaRepository baristaRepository;
+    // hergebruik van de bestaande DTO-mappings ipv ze hier te dupliceren (voor detail pagina vestiging met baristas, shifts en opleidingen)
+    private final BaristaService baristaService;
+    private final OpleidingService opleidingService;
+
+
+    // convert to DTO methoden
+    // voor overzichtsscherm hebben we een DTO nodig die ook het aantal actieve baristas bevat
+    private VestigingOverviewDTO toDTO(Vestiging v) {
+
+        long activeBaristas = baristaRepository
+                .countByVestigingIdAndActiefTrue(v.getId());
+
+        return new VestigingOverviewDTO(
+                v.getId(),
+                v.getNaam(),
+                v.getStad(),
+                v.getAantalZitplaatsen(),
+                activeBaristas
+        );
+    }
+
+    // voor vestiging detailpagina - baristas, shifts en opleidingen van deze vestiging
+    private VestigingDetailDTO toDetailDTO(Vestiging v) {
+
+        List<BaristaOverviewDTO> baristas = v.getBaristas().stream()
+                .map(baristaService::toDTO) // hergebruik van BaristaService's mapping
+                .toList();
+
+        List<ShiftDetailDTO> shifts = v.getShifts().stream()
+                .sorted(Comparator.comparing(Shift::getDatum)) // sorteer op datum, van vroeg naar laat
+                .map(s -> new ShiftDetailDTO(s.getId(),s.getDatum(), s.getStartUur(), s.getEindUur()))
+                .toList();
+
+        List<OpleidingOverviewDTO> opleidingen = v.getOpleidingen().stream()
+                .map(opleidingService::toDTO) // hergebruik van OpleidingService's mapping
+                .toList();
+
+        return new VestigingDetailDTO(
+                v.getId(),
+                v.getNaam(),
+                v.getStad(),
+                v.getAantalZitplaatsen(),
+                baristas,
+                shifts,
+                opleidingen
+        );
+    }
+
+    // voor barista filters in overzichtsscherm hebben we een DTO nodig die alleen de stad bevat
+    private StadDTO toStadDTO(String stadsNaam) {
+        return new StadDTO(stadsNaam);
+    }
+
+    // getX methoden
+
+    // voor overzichtsscherm - toon alle vestigingen
+    public List<VestigingOverviewDTO> findAll() {
+        return vestigingRepository.findAll()
+                .stream()
+                .map(this::toDTO) // active baristas zitten inbegrepen in de DTO
+                .toList();
+    }
+
+    public List<StadDTO> getAllSteden() {
+        return vestigingRepository.findAll()
+                .stream()
+                .map(Vestiging::getStad)
+                .filter(stad -> stad != null && !stad.isBlank())
+                .distinct()
+                .sorted()
+                .map(this::toStadDTO)
+                .toList();
+    }
+
+    // voor vestiging detail pagina
+    // geen autorisatieregel nodig zoals bij barista: vestiging-info is voor iedereen zichtbaar,
+    // de RBAC op baristagegevens gebeurt in de view (sec:authorize), net zoals in overview.html
+    public VestigingDetailDTO findDetailById(Long id) {
+        Vestiging v = vestigingRepository.findById(id)
+                .orElseThrow(() -> new VestigingNotFoundException(id));
+
+        return toDetailDTO(v);
+    }
+
+    // voor vestiging toevoegen/wijzigen form
+    public VestigingInputDTO toInputDTO(Vestiging v) {
+        return new VestigingInputDTO(v.getId(), v.getNaam(), v.getStad(), v.getAantalZitplaatsen());
+    }
+
+    // voor GET /vestiging/{id}/bewerken
+    public VestigingInputDTO findInputById(Long id) {
+        Vestiging v = vestigingRepository.findById(id)
+                .orElseThrow(() -> new VestigingNotFoundException(id));
+        return toInputDTO(v);
+    }
+
+    // voor POST /vestiging/nieuw
+    public void createVestiging(VestigingInputDTO dto) {
+        Vestiging vestiging = Vestiging.builder()
+                .naam(dto.naam())
+                .stad(dto.stad())
+                .aantalZitplaatsen(dto.aantalZitplaatsen())
+                .baristas(new ArrayList<>())
+                .shifts(new ArrayList<>())
+                .opleidingen(new ArrayList<>())
+                .build();
+        vestigingRepository.save(vestiging);
+    }
+
+    // voor POST /vestiging/{id}/bewerken
+    public void updateVestiging(Long id, VestigingInputDTO dto) {
+        Vestiging vestiging = vestigingRepository.findById(id)
+                .orElseThrow(() -> new VestigingNotFoundException(id));
+        vestiging.setNaam(dto.naam());
+        vestiging.setStad(dto.stad());
+        vestiging.setAantalZitplaatsen(dto.aantalZitplaatsen());
+        vestigingRepository.save(vestiging);
+    }
+
+    // voor BaristaStadLimietValidator - de stad opzoeken a.d.h.v. de vestigingId uit het formulier
+    // null indien de vestiging niet bestaat (validator slaat de check dan gewoon over)
+    public String findStadById(Long vestigingId) {
+        return vestigingRepository.findById(vestigingId)
+                .map(Vestiging::getStad)
+                .orElse(null);
+    }
+
+    // voor VestigingUniekValidator - checkt of een andere vestiging al deze naam+stad combinatie gebruikt
+    public boolean bestaatAndereVestigingMetNaamEnStad(String naam, String stad, Long id) {
+        return vestigingRepository.findByNaamAndStad(naam, stad)
+                .filter(v -> !v.getId().equals(id))
+                .isPresent();
+    }
+}
+</file>
+
+<file path="src/main/resources/static/css/style.css">
+/* ===== Basis ===== */
+:root {
+    --kleur-primair: #6f4e37;      /* espresso bruin */
+    --kleur-primair-donker: #543a29;
+    --kleur-accent: #c8a27a;       /* latte */
+    --kleur-achtergrond: #faf6f1;  /* room */
+    --kleur-kaart: #ffffff;
+    --kleur-tekst: #3a2e28;
+    --kleur-rand: #e2d8cd;
+    --kleur-fout: #b3261e;
+    --kleur-succes: #2e7d32;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background-color: var(--kleur-achtergrond);
+    color: var(--kleur-tekst);
+    margin: 0;
+    line-height: 1.5;
+}
+
+h1, h2, h3 {
+    text-align: center;
+    color: var(--kleur-primair-donker);
+}
+
+h1 {
+    margin: 24px 0 16px;
+}
+
+a {
+    color: var(--kleur-primair);
+    text-decoration: none;
+}
+
+.center-link {
+    text-align: center;
+    margin: 20px 0;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Navbar ===== */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    background-color: var(--kleur-primair);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.nav-left,
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.navbar a {
+    color: #fff;
+    font-weight: 500;
+}
+
+.navbar a:hover {
+    color: var(--kleur-accent);
+    text-decoration: none;
+}
+
+.navbar span {
+    color: #f1e7db;
+}
+
+.navbar button {
+    background-color: transparent;
+    border: 1px solid #fff;
+    color: #fff;
+    padding: 6px 14px;
+}
+
+.navbar button:hover {
+    background-color: #fff;
+    color: var(--kleur-primair);
+}
+
+/* ===== Tabellen ===== */
+table {
+    border-collapse: collapse;
+    margin: 20px auto;
+    background-color: var(--kleur-kaart);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    min-width: 60%;
+}
+
+th, td {
+    padding: 10px 18px;
+    text-align: center;
+}
+
+th {
+    background-color: var(--kleur-primair);
+    color: #fff;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+td {
+    border-bottom: 1px solid var(--kleur-rand);
+}
+
+tr:nth-child(even) td {
+    background-color: #faf3ec;
+}
+
+tr:hover td {
+    background-color: #f1e4d4;
+}
+
+/* ===== Forms ===== */
+.filter-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 20px auto;
+    max-width: none;
+    background-color: var(--kleur-kaart);
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+form p {
+    margin: 14px 0;
+}
+
+label {
+    display: inline-block;
+    min-width: 160px;
+    font-weight: 500;
+    color: var(--kleur-primair-donker);
+}
+
+input, select, textarea {
+    padding: 8px 10px;
+    border: 1px solid var(--kleur-rand);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1em;
+    background-color: #fff;
+    color: var(--kleur-tekst);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--kleur-primair);
+    box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.15);
+}
+
+button, input[type="submit"] {
+    background-color: var(--kleur-primair);
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in;
+}
+
+button:hover, input[type="submit"]:hover {
+    background-color: var(--kleur-primair-donker);
+}
+
+/* ===== Login ===== */
+.login-title {
+    text-align: center;
+}
+
+#login-box {
+    max-width: 340px;
+    margin: 60px auto;
+    text-align: center;
+    background-color: var(--kleur-kaart);
+    padding: 28px 32px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.login-table {
+    width: 100%;
+    table-layout: fixed;
+    box-shadow: none;
+    min-width: 0;
+}
+
+.login-table td,
+.login-table th {
+    border: none;
+    padding: 10px;
+    text-align: left;
+    background-color: transparent;
+}
+
+.login-table td:first-child {
+    width: 110px;
+}
+
+.login-table input {
+    width: 100%;
+}
+
+/* ===== Actieknoppen (bewerken/verwijderen/toevoegen) ===== */
+/* zorgt dat <a>-links er hetzelfde uitzien als <button>-elementen,
+   zodat bv. "Bewerken" (link) en "Verwijderen" (button) consistent ogen */
+.btn {
+    display: inline-block;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--kleur-primair);
+    color: #fff;
+    border: 1px solid transparent;
+    padding: 9px 20px;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 1em;
+    line-height: 1.5;
+    vertical-align: middle;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.15s ease-in;
+}
+
+.btn:hover {
+    background-color: var(--kleur-primair-donker);
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn-danger {
+    background-color: var(--kleur-fout);
+}
+
+.btn-danger:hover {
+    background-color: #8c1d16;
+}
+
+/* rij van actieknoppen (bv. Bewerken + Verwijderen naast elkaar) */
+.action-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* prominente actiebalk op detailpaginas, bv. onder de titel */
+.action-bar {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 16px 0 24px;
+}
+
+/* ===== Meldingen ===== */
+.msg {
+    color: var(--kleur-succes);
+    text-align: center;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.error {
+    color: var(--kleur-fout);
+    font-size: 0.9em;
+    margin-left: 8px;
+}
+
+body > form {
+    max-width: 480px;
+    margin: 20px auto;
+    background-color: var(--kleur-kaart);
+    padding: 24px 28px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== 404 Page ===== */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+}
+
+.error-content {
+    background: var(--kleur-kaart);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.error-content h1 {
+    font-size: 5rem;
+    margin-bottom: 10px;
+}
+
+.error-content a {
+    display: inline-block;
+    margin-top: 20px;
+}
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/service/BaristaService.java">
+package be.hogent.baristajob2026.service;
+
+import be.hogent.baristajob2026.dto.request.BaristaInputDTO;
+import be.hogent.baristajob2026.dto.request.FilterBaristaDTO;
+import be.hogent.baristajob2026.dto.response.BaristaDetailDTO;
+import be.hogent.baristajob2026.dto.response.BaristaOverviewDTO;
+import be.hogent.baristajob2026.dto.response.OpleidingOverviewDTO;
+import be.hogent.baristajob2026.dto.response.ShiftDetailDTO;
+import be.hogent.baristajob2026.exception.BaristaNotFoundException;
+import be.hogent.baristajob2026.exception.VestigingNotFoundException;
+import be.hogent.baristajob2026.model.*;
+import be.hogent.baristajob2026.repository.BaristaRepository;
+import be.hogent.baristajob2026.repository.VestigingRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class BaristaService {
+    private final BaristaRepository repository;
+    // nodig voor barista toevoegen/wijzigen
+    private final VestigingRepository vestigingRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    // convert to DTO methoden
+
+    // voor overzichtsscherm
+    public BaristaOverviewDTO toDTO(Barista b) {
+        return new BaristaOverviewDTO(
+                b.getId(),
+                b.getVoornaam(),
+                b.getAchternaam(),
+                b.getVestiging() != null ? b.getVestiging().getStad() : null, // stad is een berekend gegeven uit entiteit vestiging
+                b.isActief(),
+                b.getGeboortedatum(),
+                b.getShifts().size(), // aantal shifts is een sorteer optie in het overzichtsscherm, dus we tellen hier het aantal shifts
+                b.getOpleidings().stream() // nodig voor barista filter optie op opleiding in overzichtsscherm
+                        .map(o -> new OpleidingOverviewDTO(o.getId(), o.getTitel()))
+                        .toList()
+        );
+    }
+
+    // voor barista detail pagina
+    private BaristaDetailDTO toDetailDTO(Barista b) {
+        LocalDate vandaag = LocalDate.now();
+
+        List<ShiftDetailDTO> toekomstigeShifts = b.getShifts().stream()
+                .filter(s -> !s.getDatum().isBefore(vandaag)) // houd alleen shifts die vandaag of later zijn (toekomstige shifts)
+                .sorted(Comparator.comparing(Shift::getDatum)) // sorteer op datum, van vroeg naar laat
+                .map(s -> new ShiftDetailDTO(s.getId(),s.getDatum(), s.getStartUur(), s.getEindUur()))
+                .toList();
+
+        List<ShiftDetailDTO> afgelopenShifts = b.getShifts().stream()
+                .filter(s -> s.getDatum().isBefore(vandaag)) // houd alleen shifts die in het verleden liggen (afgelopen shifts)
+                .sorted(Comparator.comparing(Shift::getDatum).reversed()) // sorteer op datum, van laat naar vroeg (meest recente afgelopen shift eerst)
+                .map(s -> new ShiftDetailDTO(s.getId(),s.getDatum(), s.getStartUur(), s.getEindUur()))
+                .toList();
+
+        // splitsing gebeurt op entity-niveau (o.getDatum()), maar we mappen naar de
+        // al bestaande OpleidingOverviewDTO - geen nieuwe DTO nodig
+        List<OpleidingOverviewDTO> geplandeOpleidingen = b.getOpleidings().stream()
+                .filter(o -> !o.getDatum().isBefore(vandaag)) // houd alleen opleidingen die vandaag of later zijn (geplande opleidingen)
+                .sorted(Comparator.comparing(Opleiding::getDatum)) // sorteer op datum, van vroeg naar laat (eerstvolgende opleiding eerst)
+                .map(o -> new OpleidingOverviewDTO(o.getId(), o.getTitel()))
+                .toList();
+
+        List<OpleidingOverviewDTO> voltooideOpleidingen = b.getOpleidings().stream()
+                .filter(o -> o.getDatum().isBefore(vandaag)) // houd alleen opleidingen die in het verleden liggen (voltooide opleidingen)
+                .sorted(Comparator.comparing(Opleiding::getDatum).reversed()) // sorteer op datum, van laat naar vroeg (meest recent voltooide opleiding eerst)
+                .map(o -> new OpleidingOverviewDTO(o.getId(), o.getTitel()))
+                .toList();
+
+        return new BaristaDetailDTO(
+                b.getId(), b.getVoornaam(), b.getAchternaam(), b.getEmail(),
+                b.getGeboortedatum(), b.getStudentenkaartNummer(), b.isActief(),
+                b.getVestiging() != null ? b.getVestiging().getNaam() : null,
+                toekomstigeShifts, afgelopenShifts, geplandeOpleidingen, voltooideOpleidingen
+        );
+    }
+
+    // voor barista toevoegen/wijzigen form
+    public BaristaInputDTO toInputDTO(Barista b) {
+        return new BaristaInputDTO(
+                b.getId(),
+                b.getVoornaam(),
+                b.getAchternaam(),
+                b.getEmail(),
+                b.getGeboortedatum(),
+                b.getStudentenkaartNummer(),
+                b.isActief(),
+                b.getVestiging() != null ? b.getVestiging().getId() : null
+        );
+    }
+
+
+    // getX methoden
+
+    // voor spring secruity, we werken met email ipv username
+    public Barista findByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Barista not found: ".formatted(email)));
+    }
+
+    // voor overzichtsscherm - toon alle baristas
+    public List<BaristaOverviewDTO> findAllOverview() {
+        return repository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    // voor barista filters in overzichtsscherm
+    public List<BaristaOverviewDTO> findFilteredBaristas(FilterBaristaDTO filter) {
+        return repository.findAll().stream()
+                // filter op city
+                .filter(b -> filter.stadSelected() == null || filter.stadSelected().isBlank()
+                        || (b.getVestiging() != null && filter.stadSelected().equals(b.getVestiging().getStad())))
+                // filter op status
+                .filter(b -> filter.actiefSelected() == null || filter.actiefSelected().isBlank()
+                        ||
+                        // filter.actiefSelected() bevat "true" of "false" als string vanuit de form
+                        // dus we moeten eerst converteren naar een boolean voordat we vergelijken met b.isActief()
+                        b.isActief() == Boolean.parseBoolean(filter.actiefSelected()))
+                // filter op opleiding
+                .filter(b -> filter.opleidingSelected() == null
+                        ||
+                        // een barista heeft een lijst van opleidingen
+                        // dus je streamt zijn data set van opleidingen, en kijkt
+                        // of er een match is met de geselecteerde opleiding
+                        b.getOpleidings().stream().anyMatch(o -> o.getId().equals(filter.opleidingSelected())))
+                // sorteer op naam, aantal shifts of geboortedatum
+                // filter.sortSelected() bevat de gekozen sorteeroptie als string vanuit de form
+                .sorted((b1, b2) -> {
+                    if (filter.sortSelected() == null || filter.sortSelected().isBlank()) {
+                        return 0; // geen sortering
+                    }
+                    return switch (filter.sortSelected()) {
+                        case "naam" -> b1.getVoornaam().compareTo(b2.getVoornaam());
+                        case "shifts" -> Integer.compare(b1.getShifts().size(), b2.getShifts().size());
+                        case "geboortedatum" -> b1.getGeboortedatum().compareTo(b2.getGeboortedatum());
+                        default -> 0;
+                    };
+                })
+                .map(this::toDTO)
+                .toList();
+    }
+
+    // voor barista detail pagina
+    // controller geeft enkel de email en admin-status van de ingelogde gebruiker door
+    // hier wordt effectief BESLIST of die persoon dit profiel mag zien
+    public BaristaDetailDTO findDetailById(Long id, String currentUserEmail, boolean isAdmin) {
+        Barista b = repository.findById(id)
+                .orElseThrow(() -> new BaristaNotFoundException(id));
+
+        // autorisatieregel: enkel admins en de barista zelf mogen dit profiel zien
+        if (!isAdmin && !b.getEmail().equals(currentUserEmail)) {
+            throw new AccessDeniedException("Geen toegang tot dit profiel");
+        }
+
+        return toDetailDTO(b);
+    }
+
+    // voor GET /barista/{id}/bewerken
+    public BaristaInputDTO findInputById(Long id) {
+        Barista b = repository.findById(id)
+                .orElseThrow(() -> new BaristaNotFoundException(id));
+        return toInputDTO(b);
+    }
+
+    // voor POST /barista/nieuw
+    public void createBarista(BaristaInputDTO dto) {
+        Vestiging vestiging = vestigingRepository.findById(dto.vestigingId())
+                .orElseThrow(() -> new VestigingNotFoundException(dto.vestigingId()));
+
+        Barista barista = Barista.builder()
+                .voornaam(dto.voornaam())
+                .achternaam(dto.achternaam())
+                .email(dto.email())
+                .geboortedatum(dto.geboortedatum())
+                .studentenkaartNummer(dto.studentenkaartNummer())
+                .actief(dto.actief() != null && dto.actief())
+                .administratiefGeblokkeerd(false)
+                .vestiging(vestiging)
+                // er is geen wachtwoordveld in het formulier
+                // dus we geven een tijdelijk wachtwoord op basis van het studentenkaartnummer
+                .password(passwordEncoder.encode(dto.studentenkaartNummer()))
+                .rol(Rol.BARISTA)
+                .shiftRol(ShiftRol.BARISTA)
+                .shifts(new HashSet<>())
+                .opleidings(new HashSet<>())
+                .build();
+
+        repository.save(barista);
+    }
+
+    // voor POST /barista/{id}/bewerken
+    public void updateBarista(Long id, BaristaInputDTO dto) {
+        Barista barista = repository.findById(id)
+                .orElseThrow(() -> new BaristaNotFoundException(id));
+        Vestiging vestiging = vestigingRepository.findById(dto.vestigingId())
+                .orElseThrow(() -> new VestigingNotFoundException(dto.vestigingId()));
+
+        barista.setVoornaam(dto.voornaam());
+        barista.setAchternaam(dto.achternaam());
+        barista.setEmail(dto.email());
+        barista.setGeboortedatum(dto.geboortedatum());
+        barista.setStudentenkaartNummer(dto.studentenkaartNummer());
+        barista.setActief(dto.actief() != null && dto.actief());
+        barista.setVestiging(vestiging);
+
+        repository.save(barista);
+    }
+
+    // voor de "Mijn shifts" link in de navbar
+    // /barista/2/shifts -> id nodig om shift pagina van de ingelogde gebruiker te tonen
+    public Long findIdByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new BaristaNotFoundException(email))
+                .getId();
+    }
+
+    // voor BaristaUniekValidator - checkt of een andere barista al dit email gebruikt
+    public boolean bestaatAndereBaristaMetEmail(String email, Long id) {
+        return repository.findByEmail(email)
+                .filter(b -> !b.getId().equals(id))
+                .isPresent();
+    }
+
+    // voor BaristaUniekValidator - checkt of een andere barista al dit studentenkaartnummer gebruikt
+    public boolean bestaatAndereBaristaMetStudentenkaart(String studentenkaartNummer, Long id) {
+        return repository.findByStudentenkaartNummer(studentenkaartNummer)
+                .filter(b -> !b.getId().equals(id))
+                .isPresent();
+    }
+
+    // voor BaristaStadLimietValidator - aantal actieve baristas in een stad,
+    // exclusief de barista die je zelf aan het bewerken bent (excludeId == null bij aanmaken)
+    public long telActieveBaristasInStad(String stad, Long excludeId) {
+        return excludeId != null
+                ? repository.countByVestiging_StadAndActiefTrueAndIdNot(stad, excludeId)
+                : repository.countByVestiging_StadAndActiefTrue(stad);
+    }
+
+
+    // voor REST: baristas in een gegeven stad
+    public List<BaristaOverviewDTO> findByStad(String stad) {
+        return repository.findByVestiging_Stad(stad).stream()
+                .map(this::toDTO)
+                .toList();
+    }
+}
+</file>
+
+<file path="src/main/resources/templates/fragments/navbar.html">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<link rel="stylesheet" th:href="@{/css/style.css}" />
+<body>
+<div th:fragment="navbar">
+
+    <nav class="navbar">
+
+        <!-- knoppen/paginas -->
+        <div class="nav-left">
+            <a th:href="@{/overview}" th:text="#{nav.overview}"></a>
+            <a th:href="@{/opleiding}" th:text="#{nav.opleidingen}"></a>
+            <a sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:href="@{/barista/mijn-shifts}" th:text="#{nav.mijnshifts}"></a>
+            <a sec:authorize="hasAnyRole('ADMIN','BARISTA')" th:href="@{/barista/mijn-profiel}" th:text="#{nav.mijnprofiel}"></a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/barista/nieuw}" th:text="#{nav.baristatoevoegen}"></a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/shift/nieuw}" th:text="#{nav.shifttoevoegen}"></a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/vestiging/nieuw}" th:text="#{nav.vestigingtoevoegen}"></a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/opleiding/nieuw}" th:text="#{nav.opleidingtoevoegen}"></a>
+        </div>
+
+        <!-- taal wisselen -->
+        <div class="nav-lang">
+            <a th:href="@{/overview(lang='nl')}" th:text="#{nav.lang.nl}"></a>
+            |
+            <a th:href="@{/overview(lang='en')}" th:text="#{nav.lang.en}"></a>
+        </div>
+
+        <!-- log in/out -->
+        <div class="nav-right">
+
+            <!-- als je ingelogd bent -->
+            <span sec:authorize="hasAnyRole('ADMIN','BARISTA')">
+
+                <span>
+<!--                    dit zou ook werken door de security context-->
+<!--                 <strong sec:authentication="principal.username"></strong>-->
+<!--                    dit werkt door GlobalControllerAdvice's @ModelAttribute "username" die de username in de model plaatst-->
+                    <strong th:text="${username}"></strong>
+                </span>
+
+                <span>
+                    |
+                   <strong th:each="role : ${roles}"
+                           th:text="${role}">
+                    </strong>
+                </span>
+
+                <form th:action="@{/logout}" method="post" style="display:inline;">
+                     <button type="submit" th:text="#{nav.logout}"></button>
+
+                    <input type="hidden"
+                           th:name="${_csrf.parameterName}"
+                           th:value="${_csrf.token}" />
+                </form>
+
+            </span>
+
+            <!-- niet ingelogd -->
+            <span sec:authorize="!hasAnyRole('ADMIN','BARISTA')">
+               <a th:href="@{/login}" th:text="#{nav.login}"></a>
+            </span>
+
+        </div>
+
+    </nav>
+
+</div>
+
+</body>
+</html>
+</file>
+
+<file path="src/main/java/be/hogent/baristajob2026/config/SecurityConfig.java">
+package be.hogent.baristajob2026.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SecurityConfig {
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/opleiding/*/inschrijven").hasAnyRole("BARISTA", "ADMIN")
+                        .requestMatchers("/opleiding/nieuw", "/opleiding/*/bewerken").hasRole("ADMIN")
+                        .requestMatchers("/vestiging/nieuw", "/vestiging/*/bewerken").hasRole("ADMIN")
+                        .requestMatchers("/","/login**", "/css/**", "/403**", "/overview", "/vestiging/**","/opleiding/**","/api/**").permitAll()
+                        .requestMatchers("/barista/nieuw", "/barista/*/bewerken").hasRole("ADMIN")
+                        .requestMatchers("/barista/**").hasAnyRole("BARISTA", "ADMIN")
+                        .requestMatchers("/shift/nieuw", "/shift/*/bewerken", "/shift/*/verwijderen").hasRole("ADMIN")
+                        .anyRequest().hasAnyRole("BARISTA", "ADMIN")
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/overview", true)
+                        // we werken met email ipv username volgens opgave
+                        // default wordt er in de view gezocht op "username"
+                        .usernameParameter("email")
+                        .permitAll()
+                )
+
+                .exceptionHandling(handling -> handling
+                        .accessDeniedPage("/403")
+                )
+
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll()
+                );
+
+
+
+        return http.build();
+    }
+
+}
+</file>
+
+</files>

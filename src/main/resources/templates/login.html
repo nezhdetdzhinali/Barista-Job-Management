@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Inlogpagina</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<h1>Inloggen</h1>
+
+<div id="login-box">
+
+    <h3>Log in met e-mailadres en wachtwoord</h3>
+
+    <div th:if="${param.error}" class="error">Ongeldig e-mailadres of wachtwoord.</div>
+
+    <div th:if="${param.logout}" class="msg">U bent succesvol uitgelogd.</div>
+
+    <form th:action="@{/login}" method="post">
+        <table class="login-table">
+            <tr>
+                <td>E-mail:</td>
+                <td><input type='text' name='email' value='' autofocus></td>
+            </tr>
+            <tr>
+                <td>Wachtwoord:</td>
+                <td><input type='password' name='password' /></td>
+            </tr>
+            <tr>
+                <td colspan='2'><button name="submit" type="submit">Login</button></td>
+            </tr>
+        </table>
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    </form>
+</div>
+
+</body>
+</html>

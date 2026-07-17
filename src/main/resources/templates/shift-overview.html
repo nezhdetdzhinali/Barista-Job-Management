@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Shifts - ' + ${barista.voornaam}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script type="text/javascript">
+        function goBack() { window.history.back(); }
+    </script>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="'Shifts van ' + ${barista.voornaam}"></h1>
+
+<p th:if="${foutmelding}" class="error" th:text="${foutmelding}"></p>
+
+<h2>Mijn shifts</h2>
+<table th:with="datePattern=#{date.format}, timePattern=#{time.format}">
+    <tr>
+        <th>Datum</th><th>Startuur</th><th>Einduur</th><th>Rol</th><th>Vestiging</th>
+    </tr>
+    <tr th:each="s : ${eigenShifts}">
+        <td th:text="${#temporals.format(s.datum, datePattern)}"></td>
+        <td th:text="${#temporals.format(s.startUur, timePattern)}"></td>
+        <td th:text="${#temporals.format(s.eindUur, timePattern)}"></td>
+        <td th:text="${s.rol}"></td>
+        <td th:text="${s.vestigingNaam}"></td>
+    </tr>
+</table>
+
+<h2>Beschikbare shifts</h2>
+<table>
+    <tr>
+        <th>Datum</th><th>Startuur</th><th>Einduur</th><th>Rol</th><th>Plaatsen</th><th></th>
+    </tr>
+    <tr th:each="s : ${beschikbareShifts}">
+        <td th:text="${s.datum}"></td>
+        <td th:text="${s.startUur}"></td>
+        <td th:text="${s.eindUur}"></td>
+        <td th:text="${s.rol}"></td>
+        <td th:text="${s.aantalIngeschreven} + ' / ' + ${s.maxBaristas}"></td>
+        <td>
+            <form th:action="|/shift/${s.id}/inschrijven|" method="post">
+                <button type="submit">Inschrijven</button>
+            </form>
+        </td>
+    </tr>
+</table>
+
+<br><br>
+<button type="button" onclick="goBack()">Back</button>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Vestiging</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${vestigingInputDTO.id} != null ? 'Vestiging bewerken' : 'Vestiging toevoegen'"></h1>
+
+<form th:action="${vestigingInputDTO.id} != null ? |/vestiging/${vestigingInputDTO.id}/bewerken| : @{/vestiging/nieuw}"
+      th:object="${vestigingInputDTO}" method="post">
+
+    <!-- nodig zodat VestigingUniekValidator zichzelf kan uitsluiten bij bewerken -->
+    <input type="hidden" th:field="*{id}" />
+
+    <p>
+        <label>Naam:</label> <input type="text" th:field="*{naam}" size="20"/>
+        <span th:if="${#fields.hasErrors('naam')}" th:errorclass="error" th:errors="*{naam}"></span>
+    </p>
+
+    <p>
+        <label>Stad:</label> <input type="text" th:field="*{stad}" size="20"/>
+        <span th:if="${#fields.hasErrors('stad')}" th:errorclass="error" th:errors="*{stad}"></span>
+    </p>
+
+    <p>
+        <label>Aantal zitplaatsen:</label> <input type="number" th:field="*{aantalZitplaatsen}" size="5"/>
+        <span th:if="${#fields.hasErrors('aantalZitplaatsen')}" th:errorclass="error" th:errors="*{aantalZitplaatsen}"></span>
+    </p>
+
+    <p>
+        <button type="submit">OK</button>
+    </p>
+
+</form>
+
+</body>
+</html>

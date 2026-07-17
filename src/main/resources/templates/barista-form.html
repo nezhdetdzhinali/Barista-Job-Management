@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${baristaInputDTO.id} != null ? #{barista.form.titel.bewerken} : #{barista.form.titel.nieuw}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<h1 th:text="${baristaInputDTO.id} != null ? #{barista.form.titel.bewerken} : #{barista.form.titel.nieuw}"></h1>
+
+<form th:action="${baristaInputDTO.id} != null ? |/barista/${baristaInputDTO.id}/bewerken| : @{/barista/nieuw}"
+      th:object="${baristaInputDTO}" method="post">
+
+    <!-- nodig zodat BaristaUniekValidator zichzelf kan uitsluiten bij bewerken -->
+    <input type="hidden" th:field="*{id}" />
+
+    <p>
+        <label th:text="#{barista.form.voornaam.label}"></label> <input type="text" th:field="*{voornaam}" size="20"/>
+        <span th:if="${#fields.hasErrors('voornaam')}" th:errorclass="error" th:errors="*{voornaam}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.achternaam.label}"></label> <input type="text" th:field="*{achternaam}" size="20"/>
+        <span th:if="${#fields.hasErrors('achternaam')}" th:errorclass="error" th:errors="*{achternaam}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.email.label}"></label> <input type="text" th:field="*{email}" size="20"/>
+        <span th:if="${#fields.hasErrors('email')}" th:errorclass="error" th:errors="*{email}"></span>
+    </p>
+
+    <p>
+        <!-- input type=date vereist ISO (yyyy-MM-dd), dus dit veld gebruikt geen resource bundle datumformaat -->
+        <label th:text="#{barista.form.geboortedatum.label}"></label> <input type="date" th:field="*{geboortedatum}"/>
+        <span th:if="${#fields.hasErrors('geboortedatum')}" th:errorclass="error" th:errors="*{geboortedatum}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.studentenkaart.label}"></label> <input type="text" th:field="*{studentenkaartNummer}" size="20"/>
+        <span th:if="${#fields.hasErrors('studentenkaartNummer')}" th:errorclass="error" th:errors="*{studentenkaartNummer}"></span>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.actief.label}"></label> <input type="checkbox" th:field="*{actief}"/>
+    </p>
+
+    <p>
+        <label th:text="#{barista.form.vestiging.label}"></label>
+        <select th:field="*{vestigingId}">
+            <option value="" th:text="#{barista.form.vestiging.kies}"></option>
+            <option th:each="v : ${vestigingen}" th:value="${v.id}"
+                    th:text="${v.naam} + ' (' + ${v.stad} + ')'"></option>
+        </select>
+        <span th:if="${#fields.hasErrors('vestigingId')}" th:errorclass="error" th:errors="*{vestigingId}"></span>
+    </p>
+
+    <p>
+        <button type="submit" th:text="#{barista.form.submit}"></button>
+    </p>
+
+</form>
+
+</body>
+</html>
