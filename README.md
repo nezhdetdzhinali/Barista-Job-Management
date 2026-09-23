@@ -1,174 +1,78 @@
-# ☕ Barista Job Management
+# Introductie
 
-Een webapplicatie voor het beheren van barista's, vestigingen, shifts en opleidingen.
+Dit project is mijn **examenopdracht voor Enterprise Web Development**, een vak uit het **tweede jaar van het traject Full Stack Development** in Toegepaste Informatica aan HOGENT. Ik **behaalde er 19/20** voor.
 
-Dit project laat toe om een volledige workflow te beheren binnen een koffiebarorganisatie:
-- barista's beheren
-- vestigingen opvolgen
-- shifts plannen en inschrijven
-- opleidingen organiseren
-- rollen en toegangsrechten beheren
+## Tech stack
 
----
+De applicatie is gebouwd met Spring Boot en Spring MVC, met Thymeleaf voor de views. 
 
-## ✨ Functionaliteiten
+De persistentielaag gebruikt Spring JPA met Hibernate bovenop een MySQL-database. 
 
-### 👤 Gebruikersbeheer
-- Registratie en beheer van barista-profielen
-- Persoonlijke gegevens bekijken en aanpassen
-- Rollen gebaseerd op Spring Security:
-    - **ADMIN**
-    - **BARISTA**
+Voor de beveiliging wordt Spring Security gebruikt. Validatie gebeurt met Jakarta Validation, aangevuld met custom annotations en validators voor regels die de standaardannotaties niet dekken. 
 
-### ☕ Vestigingen
-- Vestigingen toevoegen en beheren
-- Overzicht van:
-    - aantal zitplaatsen
-    - actieve barista's
-    - geplande shifts
-    - beschikbare opleidingen
+Spring Reactive Web wordt gebruikt om externe API-calls te demonstreren. 
 
-### 📅 Shiftbeheer
-- Shifts aanmaken
-- Barista's kunnen beschikbare shifts bekijken en inschrijven
-- Overzicht van:
-    - toekomstige shifts
-    - afgelopen shifts
-    - rol binnen de shift
+De tests zijn geschreven met JUnit en Spring Boot Test.
 
-### 🎓 Opleidingen
-- Opleidingen beheren
-- Barista's kunnen zich inschrijven
-- Capaciteitscontrole:
-    - beschikbare plaatsen
-    - volgeboekte opleidingen
+| Onderdeel | Technologie |
+|---|---|
+| Backend | Java, Spring Boot, Spring MVC, Spring Data JPA, Spring Security, Spring Reactive Web |
+| Validatie | Jakarta Validation, eigen annotaties en validators |
+| Database | MySQL, Hibernate |
+| Frontend | Thymeleaf, HTML, CSS, JavaScript |
+| Testen | JUnit, Spring Boot Test |
 
-### 🌍 Internationalisatie
-- Ondersteuning voor:
-    - Nederlands
-    - Engels 
----
+## Context
 
-# 🛠️ Technologieën
+Een webapplicatie waarmee een koffieshop zijn barista's, vestigingen, shifts en opleidingen beheert.
 
-## Backend
-- Java
-- Spring Boot
-- Spring MVC
-- Spring Data JPA
-- Spring Security
-- Spring Reactive Web
-- Jakarta Validation, Custom Annotations en Validators
-- Hibernate
-- MySQL
+Er zijn twee soorten gebruikers. Een admin met een CRUD interface: barista's, vestigingen, shifts en opleidingen aanmaken, aanpassen en verwijderen. 
 
-## Frontend
-- Thymeleaf
-- HTML
-- CSS
-- JavaScript
+Een barista: zijn profiel, de shifts waarvoor hij zich kan inschrijven en de opleidingen die hij kan volgen.
 
-## Testing
-- JUnit
-- Spring Boot Test
+Per vestiging houdt de applicatie het aantal zitplaatsen, de actieve barista's, de geplande shifts en de beschikbare opleidingen bij. Shifts zijn opgedeeld in toekomstige en afgelopen shifts, met de rol van de barista binnen de shift. Bij opleidingen wordt de capaciteit bewaakt, zodat je je niet kan inschrijven voor een opleiding die volgeboekt is.
 
----
+De interface is beschikbaar in het Nederlands en het Engels.
 
-# 🚀 Installatie
+## Installatie
 
-## Vereisten
+Vereisten: Java 17 of hoger, Maven en een lokale MySQL-installatie.
 
-Zorg dat volgende software geïnstalleerd is:
-
-- Java 17+
-- Maven
-- MySQL
-
----
-
-## Database configuratie
-
-Maak een MySQL database
-
-Pas daarna `application.properties` aan:
-
-Seeding gebeurt automatisch bij het opstarten van de applicatie.
+1. Maak een lege MySQL-database aan.
+2. Pas in `application.properties` de verbinding aan:
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/xxx
+spring.datasource.url=jdbc:mysql://localhost:3306/<databasenaam>
 spring.datasource.username=<gebruikersnaam>
 spring.datasource.password=<wachtwoord>
 ```
 
----
+3. Open het project in een IDE en voer `BaristaJob2026Application` uit.
 
-## Applicatie starten
+De applicatie draait daarna op `http://localhost:8080`. Bij het opstarten worden de testgegevens automatisch ingevoegd.
 
-Via IntelliJ:
-
-1. Open het project
-2. Run `BaristaJob2026Application`
-
-De applicatie start standaard op:
-
-```
-http://localhost:8080
-```
-
----
-
-## 🔑 Testgebruikers
-
-De applicatie bevat standaard testgebruikers om de verschillende rollen te testen.
+## Testgebruikers
 
 | Rol | E-mail | Wachtwoord |
 |---|---|---|
 | ADMIN | jan.janssens@hogent.be | 12345678 |
 | BARISTA | lies.peeters@hogent.be | 12345678 |
 
-### ADMIN
-Met het admin-account kan je:
-- barista's beheren
-- vestigingen beheren
-- shifts aanmaken en aanpassen
-- opleidingen beheren
-- alle gegevens bekijken
+Met het admin-account kan je alle gegevens bekijken en beheren. Met het barista-account kan je je eigen profiel bekijken, je inschrijven voor shifts en opleidingen en je eigen shifts opvolgen.
 
-### BARISTA
-Met het barista-account kan je:
-- eigen profiel bekijken
-- beschikbare shifts bekijken en inschrijven
-- eigen shifts opvolgen
-- opleidingen bekijken en inschrijven
+## Screenshots
 
----
+### Login
+![Loginpagina](screenshots/Log-in.png)
 
+### Overzicht
+![Overzichtspagina](screenshots/overview.png)
 
----
+### Opleidingen
+![Opleidingen](screenshots/Opleidingen.png)
 
-# 📸 Screenshots
+### Shifts
+![Shifts](screenshots/Shifts.png)
 
-Hieronder staan enkele screenshots van de applicatie.  
-Deze geven een beeld van de belangrijkste functionaliteiten en gebruikersflows.
-
-## Login
-
-![Login pagina](screenshots/Log-in.png)
-
-## Overzicht
-
-![Overzicht pagina](screenshots/overview.png)
-
-## Opleidingen
-
-![Barista profiel](screenshots/Opleidingen.png)
-
-## Shifts
-
-![Barista profiel](screenshots/Shifts.png)
-
-## Admin CRUD
-![Barista profiel](screenshots/Admin.png)
-
-
----
+### Admin (CRUD)
+![Adminbeheer](screenshots/Admin.png)
